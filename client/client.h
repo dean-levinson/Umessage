@@ -29,6 +29,7 @@ public:
     string get_pubkey();
     // list<Message> get_messages();
     void connect(address_v4 address, unsigned short port);
+    void register_to_server();
     void send_message();
     void get_symmetric_key();
     void send_symmetric_key();

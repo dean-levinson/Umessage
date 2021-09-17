@@ -7,3 +7,7 @@ Client::Client(address_v4 address, unsigned short port): Client(tcp::endpoint(ad
 void Client::connect() {
     comm.connect();
 }
+
+void Client::register_to_server() {
+    // pass
+}
