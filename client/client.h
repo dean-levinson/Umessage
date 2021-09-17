@@ -5,24 +5,27 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <map>
 
 #include "communicator.h"
+#include "user.h"
 
 using std::map;
 using std::vector;
 using std::string;
 using std::byte;
+using std::map;
 
 class Client {
 private:
-    // map<string, User> users;
+    map<string, User> users;
     vector<byte> privkey;
     Communicator comm;
     
 public:
     Client(tcp::endpoint endpoint);
     Client(address_v4 address, unsigned short port);
-    ~Client();
+    void connect();
     string get_pubkey();
     // list<Message> get_messages();
     void connect(address_v4 address, unsigned short port);

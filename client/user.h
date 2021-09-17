@@ -23,7 +23,6 @@ public:
     void set_pubkey(const vector<byte> new_pubkey);
     vector<byte> get_symkey() const;
     void set_symkey(const vector<byte> new_symkey);
-    ~User();
 };
 
 #endif // USER_H_

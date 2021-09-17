@@ -1,7 +1,9 @@
 #include <iostream>
 #include <string>
 #include <exception>
+
 #include "user_interactor.h"
+
 
 typedef enum user_input_e {
     REGISTER=10,
@@ -13,6 +15,11 @@ typedef enum user_input_e {
     SEND_SYMMETRIC_KEY = 52,
     EXIT_CLIENT = 0
 } user_input;
+
+UserInteractor::UserInteractor(Client& client): client(client) {
+    std::cout << "Connecting client..." << std::endl;
+    client.connect();
+}
 
 void UserInteractor::display_client_menu() {
     std::cout << "\n---------------------------------------" << std::endl;

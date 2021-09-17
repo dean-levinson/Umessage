@@ -14,8 +14,11 @@ class Communicator {
 private:
     boost::asio::io_context context;
     tcp::socket socket;
+    tcp::endpoint endpoint;
+
 public:
     Communicator(tcp::endpoint endpoint);
+    void connect();
     void send_bytes(vector<byte> bytes);
     // void send_encrypted_bytes(Encryptor enc, vector<byte> bytes);
     vector<byte> receive_bytes(size_t size);

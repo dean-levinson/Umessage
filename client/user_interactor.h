@@ -1,14 +1,17 @@
 #ifndef USER_INTERACTOR_H_
 #define USER_INTERACTOR_H_
 
+#include "client.h"
+
 class UserInteractor {
     private:
-        // Client client;
+        Client& client;
         void display_client_menu();
         unsigned int ask_user();
     public:
         // UserInteractor();
-        // UserInteractor(Client);
+        UserInteractor(Client& client);
+        // UserInteractor(Client&& client);
 
         void start_loop();
         void register_request();
