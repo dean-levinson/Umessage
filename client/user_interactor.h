@@ -1,4 +1,4 @@
-#if !defined(USER_INTERACTOR_H_)
+#ifndef USER_INTERACTOR_H_
 #define USER_INTERACTOR_H_
 
 class UserInteractor {
@@ -8,6 +8,8 @@ class UserInteractor {
         unsigned int ask_user();
     public:
         // UserInteractor();
+        // UserInteractor(Client);
+
         void start_loop();
         void register_request();
         void get_client_list();
@@ -16,9 +18,6 @@ class UserInteractor {
         void send_message();
         void get_symmetric_key();
         void send_symmetric_key();
-        // UserInteractor(Client);
-
 };
-
 
 #endif // USER_INTERACTOR_H_
