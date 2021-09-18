@@ -18,8 +18,10 @@ using std::map;
 
 class Client {
 private:
+    uint8_t version;
     map<string, User> users;
     vector<byte> privkey;
+    vector<byte> pubkey;
     Communicator comm;
     
 public:
@@ -29,7 +31,7 @@ public:
     string get_pubkey();
     // list<Message> get_messages();
     void connect(address_v4 address, unsigned short port);
-    void register_to_server();
+    void register_client(string username);
     void send_message();
     void get_symmetric_key();
     void send_symmetric_key();

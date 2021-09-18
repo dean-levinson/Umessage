@@ -63,7 +63,7 @@ unsigned int UserInteractor::ask_user() {
 }
 
 void UserInteractor::register_request() {
-    client.register_to_server();
+    client.register_client(std::string("dean levinson"));
 }
 
 void UserInteractor::get_client_list() {
