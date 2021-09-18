@@ -23,5 +23,7 @@ void test_requests_build() {
 
 int main(int argc, char* argv[]) {
     test_requests_build();
+    std::cout << "Press any key to continue . . .";
+    std::cin.get();
     return 0;
 }
