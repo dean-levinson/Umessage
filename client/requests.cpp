@@ -60,6 +60,7 @@ RequestHeaders::RequestHeaders(std::string client_id, uint8_t version,
 
 vector<byte> RequestHeaders::build() {
     vector<byte> request;
+    push_string(request, client_id);
     push<uint8_t>(request, version);
     push<uint16_t>(request, code);
     push<uint32_t>(request, payload_size);

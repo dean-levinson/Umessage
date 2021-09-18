@@ -1,6 +1,10 @@
 #include <iostream>
+#include <cstddef>
+#include <vector>
 #include <boost/asio.hpp>
+
 #include "user_interactor.h"
+#include "requests.h"
 
 using namespace boost::asio::ip;
 
