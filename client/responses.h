@@ -27,4 +27,12 @@ public:
     void parse(vector<byte> received_bytes);
 };
 
+class Response2000
+{
+public:
+    std::string client_id;
+    size_t size();
+    void parse(vector<byte> received_bytes);
+};
+
 #endif // RESPONSES_H_

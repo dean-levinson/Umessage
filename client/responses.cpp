@@ -1,5 +1,6 @@
 #include "responses.h"
 #include "endianness.inl"
+#include <stdexcept>
 
 /**
  * Pops out and returns value of size T, from the vector's frontend.
@@ -21,12 +22,33 @@ T pop(vector<byte>& response) {
     return little_endian<T>(var);
 }
 
+string pop_string(vector<byte>& response, size_t size) {
+    if (size > response.size()) {
+        throw std::length_error("The string's size is bigger than response");
+    }    
+    string output_str;
+    output_str.resize(size, 0);
+    for (char& c: output_str) {
+        c = static_cast<char>(response.front());
+        response.erase(response.begin());
+    }
+    return output_str;
+}
+
 size_t ResponseHeaders::size() {
     return sizeof(version) + sizeof(code) + sizeof(payload_size);
 }
 
-ResponseHeaders::parse(vector<byte> received_bytes) {
+void ResponseHeaders::parse(vector<byte> received_bytes) {
     version = pop<uint8_t>(received_bytes);
     code = pop<uint16_t>(received_bytes);
     payload_size = pop<uint32_t>(received_bytes);
+}
+
+size_t Response2000::size() {
+    return client_id.size();
+}
+
+void Response2000::parse(vector<byte> received_bytes) {
+    client_id = pop_string(received_bytes, 255);
 }

@@ -22,6 +22,7 @@ void Client::register_client(string username) {
 
     ResponseHeaders response_headers;
     response_headers.parse(comm.receive_bytes(response_headers.size()));
-    // Response1000 response;
-    // Response1000.parse(comm.receive_bytes(response_headers.payload_size));
+    Response2000 response;
+    response.parse(comm.receive_bytes(response_headers.payload_size));
+    client_id = response.client_id;
 }

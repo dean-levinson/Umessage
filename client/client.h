@@ -22,6 +22,7 @@ private:
     map<string, User> users;
     vector<byte> privkey;
     vector<byte> pubkey;
+    std::string client_id;
     Communicator comm;
     
 public:

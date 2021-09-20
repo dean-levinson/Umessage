@@ -58,7 +58,8 @@ void test_response_headers_parse() {
     std::vector<std::byte> response_bytes;
     response_bytes.resize(sizeof(response_array));
     memcpy(&response_bytes[0], response_array, response_bytes.size());
-    ResponseHeaders response = (std::move(response_bytes));
+    ResponseHeaders response;
+    response.parse(std::move(response_bytes));
 
     // compare
     assert(response.version == 1);
@@ -68,10 +69,32 @@ void test_response_headers_parse() {
     std::cout << "[V] test_response_headers_parse passed" <<std::endl;
 }
 
+void test_response_2000_parse() {
+    // build response
+    std::string response_str(300, '0');
+    std::string tmp = string("Hello world");
+    response_str.replace(0, tmp.size(), tmp);
+    std::vector<std::byte> response_bytes;
+    response_bytes.resize(response_str.size());
+    memcpy(&response_bytes[0], &response_str[0], response_bytes.size());
+    Response2000 response;
+    response.parse(std::move(response_bytes));
+
+    // build target
+    std::string target = response_str;
+    target.resize(255);
+
+    // compare
+    assert(response.client_id == target);
+
+    std::cout << "[V] test_response_2000_parse passed" <<std::endl;
+}
+
 int main(int argc, char* argv[]) {
     test_request_headers_build();
     test_request_1000_build();
     test_response_headers_parse();
+    test_response_2000_parse();
 
     std::cout << "Press any key to continue . . .";
     std::cin.get();
