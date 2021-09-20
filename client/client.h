@@ -18,7 +18,7 @@ using std::map;
 
 class Client {
 private:
-    uint8_t version;
+    uint8_t client_version;
     map<string, User> users;
     vector<byte> privkey;
     vector<byte> pubkey;

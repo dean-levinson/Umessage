@@ -18,7 +18,7 @@ typedef enum user_input_e {
 
 UserInteractor::UserInteractor(Client& client): client(client) {
     std::cout << "Connecting client..." << std::endl;
-    // client.connect();
+    client.connect();
 }
 
 void UserInteractor::display_client_menu() {

@@ -5,26 +5,27 @@
 
 #include "user_interactor.h"
 #include "requests.h"
+#include "responses.h"
 
 using namespace boost::asio::ip;
 
 void test_request_headers_build() {
-    //build target
+    // build target
     uint8_t target[] = {72, 101, 108, 108, 111, 32, 119, 111,
                     114, 108, 100, 0, 0, 0, 0, 0,
                     1, 2, 0, 3, 0, 0, 0};
 
-    //build request
+    // build request
     std::string str = std::string("Hello world");
     RequestHeaders request = RequestHeaders(str, 1, 2, 3);
     std::vector<std::byte> bytes = request.build();
     
-    //compare
+    // compare
     for(int i = 0; i < bytes.size(); ++i) {
         assert(target[i] == static_cast<uint8_t>(bytes[i]));
     }
 
-    std::cout << "[V] test_request_header_build passed" <<std::endl;
+    std::cout << "[V] test_request_headers_build passed" <<std::endl;
 }
 
 void test_request_1000_build() {
@@ -47,13 +48,30 @@ void test_request_1000_build() {
     for(int i = 0; i < bytes.size(); ++i) {
         assert(target[i] == static_cast<uint8_t>(bytes[i]));
     }
-    
+
     std::cout << "[V] test_request_1000_build passed" <<std::endl;
+}
+
+void test_response_headers_parse() {
+    // build response
+    uint8_t response_array[7] = {1, 232, 3, 14, 0, 0, 0};
+    std::vector<std::byte> response_bytes;
+    response_bytes.resize(sizeof(response_array));
+    memcpy(&response_bytes[0], response_array, response_bytes.size());
+    ResponseHeaders response = (std::move(response_bytes));
+
+    // compare
+    assert(response.version == 1);
+    assert(response.code == 1000);
+    assert(response.payload_size == 14);
+
+    std::cout << "[V] test_response_headers_parse passed" <<std::endl;
 }
 
 int main(int argc, char* argv[]) {
     test_request_headers_build();
     test_request_1000_build();
+    test_response_headers_parse();
 
     std::cout << "Press any key to continue . . .";
     std::cin.get();
