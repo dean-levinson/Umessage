@@ -21,7 +21,11 @@ T pop(vector<byte>& response) {
     return little_endian<T>(var);
 }
 
-ResponseHeaders::ResponseHeaders(vector<byte> received_bytes) {
+size_t ResponseHeaders::size() {
+    return sizeof(version) + sizeof(code) + sizeof(payload_size);
+}
+
+ResponseHeaders::parse(vector<byte> received_bytes) {
     version = pop<uint8_t>(received_bytes);
     code = pop<uint16_t>(received_bytes);
     payload_size = pop<uint32_t>(received_bytes);

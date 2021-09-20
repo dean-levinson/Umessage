@@ -1,5 +1,6 @@
 #include "client.h"
 #include "requests.h"
+#include "responses.h"
 
 #define CLIENT_VERSION (2)
 
@@ -18,4 +19,9 @@ void Client::register_client(string username) {
                                                     request_1000.get_code(), payload.size());
     comm.send_bytes(request_headers.build());
     comm.send_bytes(payload);
+
+    ResponseHeaders response_headers;
+    response_headers.parse(comm.receive_bytes(response_headers.size()));
+    // Response1000 response;
+    // Response1000.parse(comm.receive_bytes(response_headers.payload_size));
 }
