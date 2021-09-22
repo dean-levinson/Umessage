@@ -14,11 +14,13 @@ void Client::connect() {
 
 void Client::register_client(string username) {
     Request1000 request_1000 = Request1000(username, pubkey);
-    vector<byte> payload = request_1000.build();
+    vector<byte> request_payload = request_1000.build();
+    uint16_t code = request_1000.get_code(); // Todo delete
     RequestHeaders request_headers = RequestHeaders(string(), client_version,
-                                                    request_1000.get_code(), payload.size());
+                                                    request_1000.get_code(),
+                                                    request_payload.size());
     comm.send_bytes(request_headers.build());
-    comm.send_bytes(payload);
+    comm.send_bytes(request_payload);
 
     ResponseHeaders response_headers;
     response_headers.parse(comm.receive_bytes(response_headers.size()));

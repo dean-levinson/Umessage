@@ -25,20 +25,19 @@ public:
 
 class RequestCode {
 protected:
-    uint8_t code;
+    uint16_t code;
 public:
-    virtual uint8_t get_code();    
+    virtual uint16_t get_code() const = 0;    
 };
 
 class Request1000: public RequestCode {
 private:
     string name;
     vector<byte> pubkey;
-protected:
-    uint16_t code;
 public:
     Request1000(string name, vector<byte> pubkey);
     vector<byte> build();
-};
+    uint16_t get_code() const;
+    };
 
 #endif // REQUESTS_H_

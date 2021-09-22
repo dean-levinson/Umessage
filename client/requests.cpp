@@ -52,14 +52,13 @@ vector<byte> RequestHeaders::build() {
     return request;
 }
 
-uint8_t RequestCode::get_code() {
-    return code;
-}
-
 Request1000::Request1000(std::string name, vector<byte> pubkey):
-    code(1000),
     name(name),
     pubkey(pubkey) {};
+
+uint16_t Request1000::get_code() const {
+    return 1000;
+}
 
 vector<byte> Request1000::build() {
     vector<byte> request;
