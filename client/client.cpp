@@ -15,7 +15,6 @@ void Client::connect() {
 void Client::register_client(string username) {
     Request1000 request_1000 = Request1000(username, pubkey);
     vector<byte> request_payload = request_1000.build();
-    uint16_t code = request_1000.get_code(); // Todo delete
     RequestHeaders request_headers = RequestHeaders(string(), client_version,
                                                     request_1000.get_code(),
                                                     request_payload.size());

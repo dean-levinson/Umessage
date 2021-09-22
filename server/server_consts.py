@@ -9,3 +9,6 @@ class Fields(object):
     CODE = UintField(2)
     PAYLOAD_SIZE = UintField(4)
     PUBLIC_KEY = ArrayField(160)
+
+SERVER_VERSION = 1
+SERVER_ERROR_CODE = 9000

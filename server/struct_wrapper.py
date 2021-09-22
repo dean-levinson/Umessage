@@ -38,6 +38,9 @@ class StructWrapper(object):
         
         return struct.calcsize(self._format)
 
+    def pack(self, *args):
+        return struct.pack(self._format, *args)
+
     def unpack(self, received_bytes):
         return struct.unpack(self._format, received_bytes)
 

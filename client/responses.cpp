@@ -24,7 +24,7 @@ T pop(vector<byte>& response) {
 
 string pop_string(vector<byte>& response, size_t size) {
     if (size > response.size()) {
-        throw std::length_error("The string's size is bigger than response");
+        throw std::length_error("The string's size is bigger than the response");
     }    
     string output_str;
     output_str.resize(size, 0);
@@ -50,5 +50,5 @@ size_t Response2000::size() {
 }
 
 void Response2000::parse(vector<byte> received_bytes) {
-    client_id = pop_string(received_bytes, 255);
+    client_id = pop_string(received_bytes, 16);
 }
