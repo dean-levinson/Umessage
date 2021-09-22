@@ -1,6 +1,14 @@
 #include "user.h"
 
-User::User(string uuid, string user_name): uuid(uuid), user_name(user_name) {}
+User::User(string client_id, string client_name): client_id(client_id), client_name(client_name) {}
+
+string User::get_client_id() const {
+    return client_id;
+}
+
+string User::get_client_name() const {
+    return client_name;
+}
 
 vector<byte> User::get_pubkey() const {
     return pubkey;

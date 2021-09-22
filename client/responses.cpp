@@ -45,10 +45,17 @@ void ResponseHeaders::parse(vector<byte> received_bytes) {
     payload_size = pop<uint32_t>(received_bytes);
 }
 
-size_t Response2000::size() {
-    return client_id.size();
-}
+// size_t Response2000::size() {
+//     return client_id.size();
+// }
 
 void Response2000::parse(vector<byte> received_bytes) {
     client_id = pop_string(received_bytes, 16);
+}
+
+void Response2001::parse(vector<byte> received_bytes) {
+    unsigned int num_of_clients = received_bytes.size() / (16 + 255); // Todo - replace with const
+    for (unsigned int i = 0; i < num_of_clients; i++) {
+        client_list.push_back(User(pop_string(received_bytes, 16), pop_string(received_bytes, 255)));
+    }
 }

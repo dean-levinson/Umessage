@@ -22,19 +22,21 @@ UserInteractor::UserInteractor(Client& client): client(client) {
 }
 
 void UserInteractor::display_client_menu() {
-    std::cout << "\n---------------------------------------" << std::endl;
-    std::cout << "---------------------------------------" << std::endl;
-    std::cout << "MessageU client at your service.\n" << std::endl;
-    std::cout << REGISTER << ") Register" << std::endl;
-    std::cout << GET_CLIENT_LIST << ") Request for clients list" << std::endl;    
-    std::cout << GET_PUBLIC_KEY << ") Request for public key" << std::endl;
-    std::cout << GET_MESSAGES << ") Request for waiting messages" << std::endl;
-    std::cout << SEND_MESSAGE << ") Send a text message" << std::endl;
-    std::cout << GET_SYMMETRIC_KEY << ") Send a request for symmetric key" << std::endl;
-    std::cout << SEND_SYMMETRIC_KEY << ") Send your symmetric key" << std::endl;
-    std::cout << EXIT_CLIENT << ") Exit client\n" << std::endl;
-    std::cout << "---------------------------------------" << std::endl;
-    std::cout << "---------------------------------------\n" << std::endl;
+    std::cout << "\n-----------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------" << std::endl;
+    std::cout << "-- " << "MessageU client at your service." << std::endl;
+    std::cout << "-- " << std::endl;
+    std::cout << "-- " << REGISTER << ") Register" << std::endl;
+    std::cout << "-- " << GET_CLIENT_LIST << ") Request for clients list" << std::endl;    
+    std::cout << "-- " << GET_PUBLIC_KEY << ") Request for public key" << std::endl;
+    std::cout << "-- " << GET_MESSAGES << ") Request for waiting messages" << std::endl;
+    std::cout << "-- " << SEND_MESSAGE << ") Send a text message" << std::endl;
+    std::cout << "-- " << GET_SYMMETRIC_KEY << ") Send a request for symmetric key" << std::endl;
+    std::cout << "-- " << SEND_SYMMETRIC_KEY << ") Send your symmetric key" << std::endl;
+    std::cout << "-- " << EXIT_CLIENT << ") Exit client" << std::endl;
+    std::cout << "-- " << std::endl;
+    std::cout << "-----------------------------------------" << std::endl;
+    std::cout << "-----------------------------------------\n" << std::endl;
 }
 
 unsigned int UserInteractor::ask_user_choice() {
@@ -84,13 +86,17 @@ void UserInteractor::register_request() {
 
     try {
         client.register_client(username);
+        std::cout << "Registered successfully!" << std::endl;
     } catch (ServerError e) {
-        std::cout << "Registration failed... maybe the user already exists" << std::endl;
+        std::cout << "Registration failed, maybe the user already exists" << std::endl;
     }
 }
 
 void UserInteractor::get_client_list() {
-    // client.get_client_list();
+    list<User> client_list = client.get_client_list();
+    for (const User& user: client_list) {
+        std::cout << " [*] " << user.get_client_id() << " - " << user.get_client_name() << std::endl;
+    }
 }
 
 void UserInteractor::get_public_key() {

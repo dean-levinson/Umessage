@@ -4,10 +4,14 @@
 #include <vector>
 #include <string>
 #include <cstddef>
+#include <list>
+
+#include "user.h"
 
 using std::vector;
 using std::string;
 using std::byte;
+using std::list;
 
 class ResponseHeaders
 {
@@ -31,7 +35,15 @@ class Response2000
 {
 public:
     std::string client_id;
-    size_t size();
+    // Todo - consider deleting this
+    // size_t size();
+    void parse(vector<byte> received_bytes);
+};
+
+class Response2001
+{
+public:
+    list<User> client_list;
     void parse(vector<byte> received_bytes);
 };
 

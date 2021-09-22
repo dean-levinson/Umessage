@@ -12,13 +12,15 @@ using std::byte;
 class User
 {
 private:
-    string uuid;
-    string user_name;
+    string client_id;
+    string client_name;
     vector<byte> pubkey;
     vector<byte> symkey;
 
 public:
-    User(string uuid, string user_name);
+    User(string client_id, string client_name);
+    string get_client_id() const;
+    string get_client_name() const;
     vector<byte> get_pubkey() const;
     void set_pubkey(const vector<byte> new_pubkey);
     vector<byte> get_symkey() const;

@@ -14,6 +14,7 @@
 using std::map;
 using std::vector;
 using std::string;
+using std::list;
 using std::byte;
 using std::map;
 
@@ -33,14 +34,14 @@ private:
     
 public:
     Client(tcp::endpoint endpoint);
-    Client(address_v4 address, unsigned short port);
+    Client(address_v4 server_address, unsigned short server_port);
     void connect();
-    string get_pubkey();
+    void register_client(string client_name);
+    list<User> get_client_list();
+    string get_public_key() const;
+    void send_message() const;
     // list<Message> get_messages();
-    void connect(address_v4 address, unsigned short port);
-    void register_client(string username);
-    void send_message();
-    void get_symmetric_key();
+    void get_symmetric_key() const;
     void send_symmetric_key();
 
 };
