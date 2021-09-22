@@ -26,3 +26,6 @@ class User(object):
         if not self.client_id:
             self.client_id = Users.generate_client_id()
         self.pubkey = pubkey
+
+    def __str__(self):
+        return f"<Client name=\"{self.client_name}\">"

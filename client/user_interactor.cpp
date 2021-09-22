@@ -37,13 +37,14 @@ void UserInteractor::display_client_menu() {
     std::cout << "---------------------------------------\n" << std::endl;
 }
 
-unsigned int UserInteractor::ask_user() {
+unsigned int UserInteractor::ask_user_choice() {
     std::string user_choice_str;
     unsigned int user_choice = 0;
     bool success = false;
     do {
         std::cout << "Enter choice: ";
-        std::cin >> user_choice_str;
+        std::getline(std::cin, user_choice_str);
+
         try {
             user_choice = std::stoi(user_choice_str);
 
@@ -62,9 +63,30 @@ unsigned int UserInteractor::ask_user() {
     return user_choice;
 }
 
+
 void UserInteractor::register_request() {
-    std::cout << "Enter username: ";
-    client.register_client(std::string("dean levinson"));
+    bool username_valid = false;
+    std::string username;
+
+    while (!username_valid) {
+        std::cout << "Enter username: ";
+        std::getline(std::cin, username);
+
+        // 255 include null terminator
+        if (username.size() > 254) {
+            std::cout << "Invalid length - username is limited to 255 chars" << std::endl;
+        } else if (username.size() == 0) {
+            std::cout << "Invalid input - username cannot be empty" << std::endl;
+        } else {
+            username_valid = true;
+        }
+    }
+
+    try {
+        client.register_client(username);
+    } catch (ServerError e) {
+        std::cout << "Registration failed... maybe the user already exists" << std::endl;
+    }
 }
 
 void UserInteractor::get_client_list() {
@@ -95,7 +117,7 @@ void UserInteractor::start_loop() {
     bool should_exit = false;
     while (!should_exit) {
         display_client_menu();
-        unsigned int user_choice = ask_user();
+        unsigned int user_choice = ask_user_choice();
 
         switch (user_choice) {
             case REGISTER:

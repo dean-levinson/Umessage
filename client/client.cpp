@@ -1,8 +1,14 @@
+#include <iostream>
+
 #include "client.h"
 #include "requests.h"
 #include "responses.h"
 
 #define CLIENT_VERSION (2)
+
+const char * ServerError::what() const throw() {
+    return "Got server error";  
+}
 
 Client::Client(tcp::endpoint endpoint): client_version(CLIENT_VERSION), comm(endpoint) {}
 
@@ -23,6 +29,12 @@ void Client::register_client(string username) {
 
     ResponseHeaders response_headers;
     response_headers.parse(comm.receive_bytes(response_headers.size()));
+
+    // todo - add consts file
+    if (response_headers.code == 9000) {
+        throw ServerError();    
+    }
+
     Response2000 response;
     response.parse(comm.receive_bytes(response_headers.payload_size));
     client_id = response.client_id;

@@ -6,6 +6,7 @@
 #include <map>
 #include <list>
 #include <map>
+#include <exception>
 
 #include "communicator.h"
 #include "user.h"
@@ -15,6 +16,11 @@ using std::vector;
 using std::string;
 using std::byte;
 using std::map;
+
+class ServerError : public std::exception {  
+    public:  
+        const char * what() const throw(); 
+};  
 
 class Client {
 private:

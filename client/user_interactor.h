@@ -7,7 +7,7 @@ class UserInteractor {
     private:
         Client& client;
         void display_client_menu();
-        unsigned int ask_user();
+        unsigned int ask_user_choice();
     public:
         // UserInteractor();
         UserInteractor(Client& client);

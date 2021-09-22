@@ -66,11 +66,11 @@ class RegisterResponse(Response):
         self.client_name = null_terminated_bytes_to_str(self.client_name)
 
         try:
-            logging.info(f"Adding new user - {self.client_name}")
             user = self._server.users.add_user(self.client_name, self.public_key)
+            logging.info(f"New user is added - {user}")
             payload = StructWrapper(Fields.CLIENT_ID).pack(user.client_id)
             await self.respond(payload)
 
         except UserAlreadyExists:
-            logging.warning("Got register request for an existing client name")
+            logging.warning(f"Got register request for an existing client name - '{self.client_name}'")
             await self.respond_error()
