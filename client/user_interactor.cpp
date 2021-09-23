@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <exception>
+#include <stdexcept>
 
 #include "user_interactor.h"
 
@@ -65,27 +66,31 @@ unsigned int UserInteractor::ask_user_choice() {
     return user_choice;
 }
 
+std::string UserInteractor::ask_client_name() {
+    bool client_name_valid = false;
+    std::string client_name;
 
-void UserInteractor::register_request() {
-    bool username_valid = false;
-    std::string username;
-
-    while (!username_valid) {
-        std::cout << "Enter username: ";
-        std::getline(std::cin, username);
+    while (!client_name_valid) {
+        std::cout << "Enter client name: ";
+        std::getline(std::cin, client_name);
 
         // 255 include null terminator
-        if (username.size() > 254) {
-            std::cout << "Invalid length - username is limited to 255 chars" << std::endl;
-        } else if (username.size() == 0) {
-            std::cout << "Invalid input - username cannot be empty" << std::endl;
+        if (client_name.size() > 254) {
+            std::cout << "Invalid length - client name is limited to 255 chars" << std::endl;
+        } else if (client_name.size() == 0) {
+            std::cout << "Invalid input - client name cannot be empty" << std::endl;
         } else {
-            username_valid = true;
+            client_name_valid = true;
         }
     }
 
+    return client_name;
+}
+void UserInteractor::register_request() {
+    std::string client_name = ask_client_name();
+
     try {
-        client.register_client(username);
+        client.register_client(client_name);
         std::cout << "Registered successfully!" << std::endl;
     } catch (ServerError e) {
         std::cout << "Registration failed, maybe the user already exists" << std::endl;
@@ -94,13 +99,28 @@ void UserInteractor::register_request() {
 
 void UserInteractor::get_client_list() {
     list<User> client_list = client.get_client_list();
+    std::cout << "Client list:" << std::endl;
     for (const User& user: client_list) {
-        std::cout << " [*] " << user.get_client_id() << " - " << user.get_client_name() << std::endl;
+        std::cout << "[*] " << user.get_client_name() << std::endl;
     }
 }
 
 void UserInteractor::get_public_key() {
-    // client.get_public_key();
+    string client_name = ask_client_name();
+    string client_id;
+    
+    try {
+        client_id = client.get_client_id(client_name);
+
+    } catch (std::out_of_range) {
+        std::cout << "No such client..." << std::endl;
+        return;
+    }
+
+    vector<byte> public_key = client.get_public_key(client_id);
+
+    // print public key
+    std::for_each(public_key.begin(), public_key.end(), [](const byte& b) {std::cout << static_cast<char>(b) << ", " << std::endl; });
 }
 
 void UserInteractor::get_messages() {

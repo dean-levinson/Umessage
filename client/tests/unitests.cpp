@@ -82,7 +82,7 @@ void test_response_2000_parse() {
 
     // build target
     std::string target = response_str;
-    target.resize(255);
+    target.resize(16);
 
     // compare
     assert(response.client_id == target);
@@ -90,11 +90,32 @@ void test_response_2000_parse() {
     std::cout << "[V] test_response_2000_parse passed" <<std::endl;
 }
 
+void test_response_2002_parse() {
+    // build response
+    std::string str(16, '1');
+    auto vec = std::vector<std::byte>(160, std::byte('2'));
+
+    std::vector<std::byte> response_bytes;
+    response_bytes.resize(16 + 160);
+    memcpy(&response_bytes[0], &str[0], str.size());
+    memcpy(&response_bytes[16], &vec[0], vec.size());
+
+    Response2002 response;
+    response.parse(std::move(response_bytes));
+
+    // compare
+    assert(response.client_id == str);
+    assert(response.public_key == vec);
+
+    std::cout << "[V] test_response_2002_parse passed" <<std::endl;
+}
+
 int main(int argc, char* argv[]) {
     test_request_headers_build();
     test_request_1000_build();
     test_response_headers_parse();
     test_response_2000_parse();
+    test_response_2002_parse();
 
     std::cout << "Press any key to continue . . .";
     std::cin.get();

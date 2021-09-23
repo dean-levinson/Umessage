@@ -39,6 +39,7 @@ class StructWrapper(object):
         return struct.calcsize(self._format)
 
     def pack(self, *args):
+        args = [bytes(arg, "ascii") if isinstance(arg, str) else arg for arg in args]
         return struct.pack(self._format, *args)
 
     def unpack(self, received_bytes):

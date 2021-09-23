@@ -31,19 +31,31 @@ public:
     void parse(vector<byte> received_bytes);
 };
 
-class Response2000
+class ResponseCode
+{
+public:
+    virtual void parse(vector<byte> received_bytes) = 0;
+};
+
+class Response2000: public ResponseCode
 {
 public:
     std::string client_id;
-    // Todo - consider deleting this
-    // size_t size();
     void parse(vector<byte> received_bytes);
 };
 
-class Response2001
+class Response2001: public ResponseCode
 {
 public:
     list<User> client_list;
+    void parse(vector<byte> received_bytes);
+};
+
+class Response2002: public ResponseCode
+{
+public:
+    string client_id;
+    vector<byte> public_key;
     void parse(vector<byte> received_bytes);
 };
 

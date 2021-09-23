@@ -27,7 +27,8 @@ class RequestCode {
 protected:
     uint16_t code;
 public:
-    virtual uint16_t get_code() const = 0;    
+    virtual vector<byte> build() const = 0;   
+    virtual uint16_t get_code() const = 0; 
 };
 
 class Request1000: public RequestCode {
@@ -36,7 +37,16 @@ private:
     vector<byte> pubkey;
 public:
     Request1000(string name, vector<byte> pubkey);
-    vector<byte> build();
+    vector<byte> build() const;
+    uint16_t get_code() const;
+    };
+
+class Request1002: public RequestCode {
+private:
+    string client_id;
+public:
+    Request1002(string client_id);
+    vector<byte> build() const;
     uint16_t get_code() const;
     };
 

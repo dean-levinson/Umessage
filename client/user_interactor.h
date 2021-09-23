@@ -8,10 +8,10 @@ class UserInteractor {
         Client& client;
         void display_client_menu();
         unsigned int ask_user_choice();
+        std::string ask_client_name();
+
     public:
-        // UserInteractor();
         UserInteractor(Client& client);
-        // UserInteractor(Client&& client);
 
         void start_loop();
         void register_request();

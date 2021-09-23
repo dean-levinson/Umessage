@@ -53,24 +53,48 @@ class Response(object):
 
 @response_code(1000)
 class RegisterResponse(Response):
-    def __init__(self, server, reader: StreamReader, writer: StreamWriter) -> None:
-        super().__init__(server, reader, writer)
-        self.client_name = None
-        self.public_key = None
-
     async def fetch_and_respond(self, request_size):
         received_bytes = await self._reader.read(request_size)
-        self.client_name, self.public_key = StructWrapper(Fields.CLIENT_NAME,
-                                                          Fields.PUBLIC_KEY).unpack(received_bytes)
+        client_name, public_key = StructWrapper(Fields.CLIENT_NAME,
+                                                Fields.PUBLIC_KEY).unpack(received_bytes)
 
-        self.client_name = null_terminated_bytes_to_str(self.client_name)
+        client_name = null_terminated_bytes_to_str(client_name)
 
         try:
-            user = self._server.users.add_user(self.client_name, self.public_key)
+            user = self._server.users.add_user(client_name, public_key)
             logging.info(f"New user is added - {user}")
             payload = StructWrapper(Fields.CLIENT_ID).pack(user.client_id)
             await self.respond(payload)
 
         except UserAlreadyExists:
-            logging.warning(f"Got register request for an existing client name - '{self.client_name}'")
+            logging.warning(f"Got register request for an existing client name - '{client_name}'")
             await self.respond_error()
+
+
+@response_code(1001)
+class ClientListResponse(Response):
+    async def fetch_and_respond(self, request_size):
+        if not (request_size == 0):
+            logging.error("Payload size of client list request should be 0")
+            await self.respond_error()
+            return
+
+        payload = bytes()
+        for user in self._server.users:
+            payload += StructWrapper(Fields.CLIENT_ID, Fields.CLIENT_NAME).pack(user.client_id, user.client_name)
+
+        await self.respond(payload)
+
+
+@response_code(1002)
+class PublicKeyResponse(Response):
+    async def fetch_and_respond(self, request_size):
+        received_bytes = await self._reader.read(request_size)
+        client_id = StructWrapper(Fields.CLIENT_ID).unpack(received_bytes)
+
+        public_key = self._server.users.get_user_by_client_id(client_id).pubkey
+        if not public_key:
+            # Todo - realise what I got to do
+            public_key = b"1" * 160
+        payload = StructWrapper(Fields.CLIENT_ID, Fields.PUBLIC_KEY).pack(client_id, public_key)
+        await self.respond(payload)

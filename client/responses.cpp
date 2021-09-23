@@ -1,6 +1,8 @@
+#include <algorithm>
+#include <stdexcept>
+
 #include "responses.h"
 #include "endianness.inl"
-#include <stdexcept>
 
 /**
  * Pops out and returns value of size T, from the vector's frontend.
@@ -35,6 +37,21 @@ string pop_string(vector<byte>& response, size_t size) {
     return output_str;
 }
 
+template<typename T>
+vector<T> pop_vector(vector<byte>& response, size_t size) {
+    if (size > response.size()) {
+        throw std::length_error("The vector's size is bigger than the response");
+    }    
+    vector<T> output_vector;
+    output_vector.resize(size, byte(0));
+    for (T &x: output_vector) {
+        memcpy(&x, &response[0], sizeof(T));
+        response.erase(response.begin(),
+                       response.begin() + sizeof(T));
+    }
+    return output_vector;
+}
+
 size_t ResponseHeaders::size() {
     return sizeof(version) + sizeof(code) + sizeof(payload_size);
 }
@@ -45,10 +62,6 @@ void ResponseHeaders::parse(vector<byte> received_bytes) {
     payload_size = pop<uint32_t>(received_bytes);
 }
 
-// size_t Response2000::size() {
-//     return client_id.size();
-// }
-
 void Response2000::parse(vector<byte> received_bytes) {
     client_id = pop_string(received_bytes, 16);
 }
@@ -56,6 +69,15 @@ void Response2000::parse(vector<byte> received_bytes) {
 void Response2001::parse(vector<byte> received_bytes) {
     unsigned int num_of_clients = received_bytes.size() / (16 + 255); // Todo - replace with const
     for (unsigned int i = 0; i < num_of_clients; i++) {
-        client_list.push_back(User(pop_string(received_bytes, 16), pop_string(received_bytes, 255)));
+        string client_id = pop_string(received_bytes, 16);
+        string client_name = pop_string(received_bytes, 255);
+        // Remove all the characters from null terminated to the end. 
+        client_name.erase(std::find(client_name.begin(), client_name.end(), '\0'), client_name.end());
+        client_list.push_back(User(client_id, client_name));
     }
+}
+
+void Response2002::parse(vector<byte> received_bytes) {
+    client_id = pop_string(received_bytes, 16);
+    public_key = pop_vector<byte>(received_bytes, 160);
 }

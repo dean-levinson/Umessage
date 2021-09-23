@@ -25,7 +25,7 @@ void push_string(vector<byte>& request, string str, size_t size) {
 template<typename T>
 void push_vector(vector<byte>& request, vector<T> vector) {
     for (const T c: vector) {
-        push<T>(request, static_cast<byte>(c));
+        push<T>(request, c);
     }
 }
 
@@ -60,9 +60,22 @@ uint16_t Request1000::get_code() const {
     return 1000;
 }
 
-vector<byte> Request1000::build() {
+vector<byte> Request1000::build() const {
     vector<byte> request;
     push_string(request, name, 255);
     push_vector<byte>(request, pubkey, 160);
+    return request;
+}
+
+Request1002::Request1002(string client_id):
+    client_id(client_id) {};
+
+uint16_t Request1002::get_code() const {
+    return 1002;
+}
+
+vector<byte> Request1002::build() const {
+    vector<byte> request;
+    push_string(request, client_id, 16);
     return request;
 }
