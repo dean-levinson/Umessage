@@ -113,7 +113,7 @@ void UserInteractor::get_public_key() {
     string client_id;
 
     try {
-        client_id = client.get_client_id(client_name);
+        client_id = client.get_client_id_by_name(client_name);
 
     } catch (std::out_of_range) {
         std::cout << "No such client..." << std::endl;
@@ -130,7 +130,7 @@ void UserInteractor::get_messages() {
 }
 
 void UserInteractor::send_message() {
-    // client.send_message(target);
+    // client.send_text_message(string target_client_id);
 }
 
 void UserInteractor::get_symmetric_key() {

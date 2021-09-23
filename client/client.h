@@ -39,14 +39,15 @@ private:
 public:
     Client(tcp::endpoint endpoint);
     Client(address_v4 server_address, unsigned short server_port);
-    string get_client_id(const string& client_name) const; 
+    string get_client_id_by_name(const string& client_name) const; 
     User& get_user_by_client_id(const string& client_id);
+    User& get_user_by_client_name(const string& client_name);
     void add_user(User user);
     void connect();
     void register_client(string client_name);
     list<User> get_client_list();
     string get_public_key(string client_id);
-    void send_message();
+    void send_text_message(string target_client_name, string text);
     // list<Message> get_messages();
     void get_symmetric_key();
     void send_symmetric_key();

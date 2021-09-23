@@ -81,3 +81,16 @@ void Response2002::parse(vector<byte> received_bytes) {
     client_id = pop_string(received_bytes, 16);
     public_key = pop_string(received_bytes, 160);
 }
+
+void Response2003::parse(vector<byte> received_bytes) {
+    client_id = pop_string(received_bytes, 16);
+    message_id = pop<uint32_t>(received_bytes);
+}
+
+void Response2004::parse(vector<byte> received_bytes) {
+    client_id = pop_string(received_bytes, 16);
+    message_id = pop<uint32_t>(received_bytes);
+    message_type = pop<uint8_t>(received_bytes);
+    message_size = pop<uint32_t>(received_bytes);
+    content = pop_string(received_bytes, message_size);
+}

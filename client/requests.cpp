@@ -79,3 +79,9 @@ vector<byte> Request1002::build() const {
     push_string(request, client_id, 16);
     return request;
 }
+
+Request1003::Request1003(string client_id, uint8_t message_type, uint32_t content_size, string enc_text):
+    client_id(client_id),
+    message_type(message_type),
+    content_size(content_size),
+    enc_text(enc_text) {}

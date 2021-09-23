@@ -50,4 +50,16 @@ public:
     uint16_t get_code() const;
     };
 
+class Request1003: public RequestCode {
+private:
+    string client_id;
+    uint8_t message_type;
+    uint32_t content_size;
+    string enc_text;
+public:
+    Request1003(string client_id, uint8_t message_type, uint32_t content_size, string enc_text);
+    vector<byte> build() const;
+    uint16_t get_code() const;
+    };
+
 #endif // REQUESTS_H_

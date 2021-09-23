@@ -59,4 +59,24 @@ public:
     void parse(vector<byte> received_bytes);
 };
 
+class Response2003: public ResponseCode
+{
+public:
+    string client_id;
+    uint32_t message_id;
+    void parse(vector<byte> received_bytes);
+};
+
+class Response2004: public ResponseCode
+{
+public:
+    string client_id;
+    uint32_t message_id;
+    uint8_t message_type;
+    uint32_t message_size;
+    string content;
+    
+    void parse(vector<byte> received_bytes);
+};
+
 #endif // RESPONSES_H_

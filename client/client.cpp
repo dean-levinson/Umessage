@@ -2,6 +2,7 @@
 #include <algorithm>
 
 #include "cryptopp_wrapper/RSAWrapper.h"
+#include "cryptopp_wrapper/AESWrapper.h"
 #include "client.h"
 #include "requests.h"
 #include "responses.h"
@@ -24,8 +25,19 @@ void Client::connect() {
     comm.connect();
 }
 
-string Client::get_client_id(const string& target_client_name) const {
+string Client::get_client_id_by_name(const string& target_client_name) const {
     return users.at(target_client_name).get_client_id();
+}
+
+
+User& Client::get_user_by_client_name(const string& target_client_name) {
+    if (users.count(target_client_name)) {
+        return users[target_client_name];
+    }
+
+    std::string err = "There is no user with client name - ";
+    err += target_client_name;
+    throw(std::out_of_range(err.c_str()));
 }
 
 User& Client::get_user_by_client_id(const string& target_client_id) {
@@ -34,6 +46,7 @@ User& Client::get_user_by_client_id(const string& target_client_id) {
             return p.second;
         }
     }
+
     std::string err = "There is no user with client id - ";
     err += target_client_id;
     throw(std::out_of_range(err.c_str()));
@@ -97,10 +110,22 @@ string Client::get_public_key(std::string target_client_id) {
     
     User& target_user = get_user_by_client_id(target_client_id);
     target_user.set_pubkey(response.public_key);
-    
+
     return response.public_key;
 }
 
 void Client::add_user(User user) {
     users.insert(std::pair<string, User>(user.get_client_name(), user));
+}
+
+void Client::send_text_message(string target_client_name, string text) {
+    User& target_user = get_user_by_client_name(target_client_name);
+
+    // Todo - function that wrappes this shit.
+    AESWrapper aes(target_user.get_symkey(), AESWrapper::DEFAULT_KEYLENGTH);
+    Request1003 request = Request1003(target_client_name, 3, aes.encrypt(text.c_str(), text.length());
+
+    build_and_send_request(request);
+
+    Response
 }
