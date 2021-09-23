@@ -55,7 +55,7 @@ class Response2002: public ResponseCode
 {
 public:
     string client_id;
-    vector<byte> public_key;
+    string public_key;
     void parse(vector<byte> received_bytes);
 };
 

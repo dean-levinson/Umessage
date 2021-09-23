@@ -52,7 +52,7 @@ vector<byte> RequestHeaders::build() {
     return request;
 }
 
-Request1000::Request1000(std::string name, vector<byte> pubkey):
+Request1000::Request1000(std::string name, std::string pubkey):
     name(name),
     pubkey(pubkey) {};
 
@@ -63,7 +63,7 @@ uint16_t Request1000::get_code() const {
 vector<byte> Request1000::build() const {
     vector<byte> request;
     push_string(request, name, 255);
-    push_vector<byte>(request, pubkey, 160);
+    push_string(request, pubkey, 160);
     return request;
 }
 

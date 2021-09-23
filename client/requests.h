@@ -34,9 +34,9 @@ public:
 class Request1000: public RequestCode {
 private:
     string name;
-    vector<byte> pubkey;
+    string pubkey;
 public:
-    Request1000(string name, vector<byte> pubkey);
+    Request1000(string name, string pubkey);
     vector<byte> build() const;
     uint16_t get_code() const;
     };

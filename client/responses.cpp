@@ -79,5 +79,5 @@ void Response2001::parse(vector<byte> received_bytes) {
 
 void Response2002::parse(vector<byte> received_bytes) {
     client_id = pop_string(received_bytes, 16);
-    public_key = pop_vector<byte>(received_bytes, 160);
+    public_key = pop_string(received_bytes, 160);
 }

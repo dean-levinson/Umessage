@@ -106,9 +106,12 @@ void UserInteractor::get_client_list() {
 }
 
 void UserInteractor::get_public_key() {
+    // resolve all the clients from the server
+    client.get_client_list();
+
     string client_name = ask_client_name();
     string client_id;
-    
+
     try {
         client_id = client.get_client_id(client_name);
 
@@ -117,10 +120,9 @@ void UserInteractor::get_public_key() {
         return;
     }
 
-    vector<byte> public_key = client.get_public_key(client_id);
+    string public_key = client.get_public_key(client_id);
 
-    // print public key
-    std::for_each(public_key.begin(), public_key.end(), [](const byte& b) {std::cout << static_cast<char>(b) << ", " << std::endl; });
+    std::cout << public_key << std::endl;
 }
 
 void UserInteractor::get_messages() {

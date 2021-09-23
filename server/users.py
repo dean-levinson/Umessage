@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from server_exceptions import UserAlreadyExists
@@ -21,6 +22,7 @@ class Users(object):
         for user in self:
             if user.client_id == client_id:
                 return user
+        logging.warning(f"Couldn't find client id {client_id}")
     
     def __iter__(self):
         return iter(self._users.values())

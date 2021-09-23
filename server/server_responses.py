@@ -90,11 +90,20 @@ class ClientListResponse(Response):
 class PublicKeyResponse(Response):
     async def fetch_and_respond(self, request_size):
         received_bytes = await self._reader.read(request_size)
-        client_id = StructWrapper(Fields.CLIENT_ID).unpack(received_bytes)
+        client_id = StructWrapper(Fields.CLIENT_ID).unpack(received_bytes)[0]
 
-        public_key = self._server.users.get_user_by_client_id(client_id).pubkey
-        if not public_key:
+        user = self._server.users.get_user_by_client_id(client_id)
+
+        if not user:
+            await self.respond_error()
+            return
+        
+        # very bad code
+        public_key = user.pubkey
+
+        if not user.pubkey:
             # Todo - realise what I got to do
             public_key = b"1" * 160
+
         payload = StructWrapper(Fields.CLIENT_ID, Fields.PUBLIC_KEY).pack(client_id, public_key)
         await self.respond(payload)
