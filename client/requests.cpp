@@ -85,3 +85,15 @@ Request1003::Request1003(string client_id, uint8_t message_type, uint32_t conten
     message_type(message_type),
     content_size(content_size),
     enc_text(enc_text) {}
+
+vector<byte> Request1003::build() const {
+    vector<byte> request;
+    push_string(request, client_id, 16);
+    push<uint8_t>(request, message_type);
+    push<uint32_t>(request, content_size);
+    push_string(request, enc_text);
+    return request;
+}
+uint16_t Request1003::get_code() const {
+    return 1003;
+}

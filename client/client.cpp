@@ -6,11 +6,20 @@
 #include "client.h"
 #include "requests.h"
 #include "responses.h"
+#include "encryptor.h"
 
 #define CLIENT_VERSION (2)
 
 const char * ServerError::what() const throw() {
     return "Got server error";  
+}
+
+NoSuchUser::NoSuchUser(const char * err_msg): internal_message(err_msg) {}
+
+NoSuchUser::NoSuchUser(std::string err_msg): internal_message(err_msg) {}
+
+const char * NoSuchUser::what() const throw() {
+    return internal_message.c_str();  
 }
 
 Client::Client(tcp::endpoint endpoint): client_version(CLIENT_VERSION), comm(endpoint) {
@@ -32,12 +41,12 @@ string Client::get_client_id_by_name(const string& target_client_name) const {
 
 User& Client::get_user_by_client_name(const string& target_client_name) {
     if (users.count(target_client_name)) {
-        return users[target_client_name];
+        return users.at(target_client_name);
     }
 
     std::string err = "There is no user with client name - ";
     err += target_client_name;
-    throw(std::out_of_range(err.c_str()));
+    throw(NoSuchUser(err.c_str()));
 }
 
 User& Client::get_user_by_client_id(const string& target_client_id) {
@@ -49,7 +58,7 @@ User& Client::get_user_by_client_id(const string& target_client_id) {
 
     std::string err = "There is no user with client id - ";
     err += target_client_id;
-    throw(std::out_of_range(err.c_str()));
+    throw(NoSuchUser(err.c_str()));
 }
 
 void Client::fetch_and_parse_response(ResponseCode& response) {
@@ -118,14 +127,38 @@ void Client::add_user(User user) {
     users.insert(std::pair<string, User>(user.get_client_name(), user));
 }
 
-void Client::send_text_message(string target_client_name, string text) {
+// void Client::send_text_message(string target_client_name, string text) {
+//     User& target_user = get_user_by_client_name(target_client_name);
+
+//     // Todo - function that wrappes this shit.
+//     AESWrapper aes(target_user.get_symkey(), AESWrapper::DEFAULT_KEYLENGTH);
+//     Request1003 request = Request1003(target_client_name, 3, aes.encrypt(text.c_str(), text.length());
+
+//     build_and_send_request(request);
+
+//     Response
+// }
+
+void Client::get_symmetric_key(string target_client_name) {
+    User& target_user = get_user_by_client_name(target_client_name);
+    Request1003 request = Request1003(target_client_name, 2, encrypted_payload.size(), encrypted_payload);
+}
+
+void Client::send_symmetric_key(string target_client_name) {
     User& target_user = get_user_by_client_name(target_client_name);
 
-    // Todo - function that wrappes this shit.
-    AESWrapper aes(target_user.get_symkey(), AESWrapper::DEFAULT_KEYLENGTH);
-    Request1003 request = Request1003(target_client_name, 3, aes.encrypt(text.c_str(), text.length());
-
+    symmetricEncryptor symenc = symmetricEncryptor();
+    string generated_key = symenc.get_sym_key();
+    target_user.set_symkey(generated_key); // Set the new symmetric key to the target user
+    PublicEncryptor pubenc = PublicEncryptor(target_user.get_pubkey());
+    string encrypted_payload = pubenc.encrypt(generated_key);
+    Request1003 request = Request1003(target_client_name, 2, encrypted_payload.size(), encrypted_payload);
     build_and_send_request(request);
 
-    Response
+    Response2003 response;
+    fetch_and_parse_response(response);
+
+    if (!(response.client_id == target_user.get_client_id())) {
+        std::cout << "Error - got wrong client_id in response 2003" << std::endl;
+    }
 }

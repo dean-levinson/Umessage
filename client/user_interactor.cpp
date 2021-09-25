@@ -106,8 +106,7 @@ void UserInteractor::get_client_list() {
 }
 
 void UserInteractor::get_public_key() {
-    // resolve all the clients from the server
-    client.get_client_list();
+    client.get_client_list(); // resolve all the clients from the server
 
     string client_name = ask_client_name();
     string client_id;
@@ -134,11 +133,25 @@ void UserInteractor::send_message() {
 }
 
 void UserInteractor::get_symmetric_key() {
-    // client.get_symmetric_key();
+    client.get_client_list(); // resolve all the clients from the server
+
+    try {
+        client.get_symmetric_key(ask_client_name());
+    } catch (NoSuchUser e) {
+        std::cout << "Got error: " << e.what() << std::endl;
+        std::cout << "No such user... aborting" << std::endl;
+    }
 }
 
 void UserInteractor::send_symmetric_key() {
-    // client.send_symmetric_key();
+    client.get_client_list(); // resolve all the clients from the server
+
+    try {
+        client.send_symmetric_key(ask_client_name());
+    } catch (NoSuchUser e) {
+        std::cout << "Got error: " << e.what() << std::endl;
+        std::cout << "No such user... aborting" << std::endl;
+    }
 }
 
 void UserInteractor::start_loop() {

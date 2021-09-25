@@ -25,6 +25,15 @@ class ServerError : public std::exception {
         const char * what() const throw(); 
 };  
 
+class NoSuchUser : public std::exception {  
+    private:
+        std::string internal_message;
+    public:  
+        NoSuchUser(const char * err_message);
+        NoSuchUser(std::string err_message);
+        const char * what() const throw(); 
+};  
+
 class Client {
 private:
     uint8_t client_version;
@@ -47,10 +56,10 @@ public:
     void register_client(string client_name);
     list<User> get_client_list();
     string get_public_key(string client_id);
-    void send_text_message(string target_client_name, string text);
+    // void send_text_message(string target_client_name, string text);
     // list<Message> get_messages();
-    void get_symmetric_key();
-    void send_symmetric_key();
+    void get_symmetric_key(string target_client_name);
+    void send_symmetric_key(string target_client_name);
 };
 
 #endif // CLIENT_H_

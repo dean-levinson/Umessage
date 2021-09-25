@@ -61,5 +61,5 @@ public:
     vector<byte> build() const;
     uint16_t get_code() const;
     };
-
+    
 #endif // REQUESTS_H_
