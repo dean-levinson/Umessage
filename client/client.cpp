@@ -7,22 +7,46 @@
 #include "requests.h"
 #include "responses.h"
 #include "encryptor.h"
+#include "message.h"
 
 #define CLIENT_VERSION (2)
 
+ServerError::ServerError(): err() {}
+
+ServerError::ServerError(std::string err): err(err) {}
+
+ServerError::ServerError(const char* err): err(err) {}
+
 const char * ServerError::what() const throw() {
-    return "Got server error";  
+    if (err.length() != 0) {
+        return err.c_str();
+    }
+
+    return "Server error"; 
 }
 
-NoSuchUser::NoSuchUser(const char * err_msg): internal_message(err_msg) {}
+NoSuchUser::NoSuchUser(std::string err_msg): internal_message(err_msg) {
+    internal_message += "\nConsider calling 'Get clients list'...";
+}
 
-NoSuchUser::NoSuchUser(std::string err_msg): internal_message(err_msg) {}
+NoSuchUser::NoSuchUser(const char * err_msg): NoSuchUser(std::string(err_msg)) {}
 
 const char * NoSuchUser::what() const throw() {
     return internal_message.c_str();  
 }
 
+NoPublicKey::NoPublicKey(const std::string& client_name): client_name(client_name) {
+    err = string("User ") + "'" + client_name + "''s public key not found.\n"
+     "Consider calling 'Request for public key'...";
+}
+
+const char * NoPublicKey::what() const throw() {
+    return err.c_str();
+}
+
 Client::Client(tcp::endpoint endpoint): client_version(CLIENT_VERSION), comm(endpoint) {
+    // todo - read details from info file
+    // maybe add the following logic to PublicEncryptor (ctor without existing key)
     RSAPrivateWrapper rsapriv;
     pubkey = rsapriv.getPublicKey();
     privkey = rsapriv.getPrivateKey();
@@ -35,7 +59,12 @@ void Client::connect() {
 }
 
 string Client::get_client_id_by_name(const string& target_client_name) const {
-    return users.at(target_client_name).get_client_id();
+    if (users.count(target_client_name)) {
+        return users.at(target_client_name).get_client_id();
+    }
+
+    std::string err = "There is no user with client name '" + target_client_name + "'";
+    throw(NoSuchUser(err));
 }
 
 
@@ -44,9 +73,8 @@ User& Client::get_user_by_client_name(const string& target_client_name) {
         return users.at(target_client_name);
     }
 
-    std::string err = "There is no user with client name - ";
-    err += target_client_name;
-    throw(NoSuchUser(err.c_str()));
+    std::string err = "There is no user with client name '" + target_client_name + "'";
+    throw(NoSuchUser(err));
 }
 
 User& Client::get_user_by_client_id(const string& target_client_id) {
@@ -56,9 +84,8 @@ User& Client::get_user_by_client_id(const string& target_client_id) {
         }
     }
 
-    std::string err = "There is no user with client id - ";
-    err += target_client_id;
-    throw(NoSuchUser(err.c_str()));
+    std::string err = "There is no user with client id '" + target_client_id + "'";
+    throw(NoSuchUser(err));
 }
 
 void Client::fetch_and_parse_response(ResponseCode& response) {
@@ -83,6 +110,7 @@ void Client::build_and_send_request(RequestCode& request) {
 }
 
 void Client::register_client(string client_name) {
+    // Todo - if client_id member is set, throw excpetion ClientAlreadyRegistered
     Request1000 request_1000 = Request1000(client_name, pubkey);
     build_and_send_request(request_1000);
 
@@ -97,7 +125,7 @@ void Client::register_client(string client_name) {
     client_id = response.client_id;
 }
 
-list<User> Client::get_client_list() {
+list<User> Client::get_clients_list() {
     RequestHeaders request_headers = RequestHeaders(client_id, client_version,
                                                     1001,
                                                     0);
@@ -139,26 +167,53 @@ void Client::add_user(User user) {
 //     Response
 // }
 
-void Client::get_symmetric_key(string target_client_name) {
-    User& target_user = get_user_by_client_name(target_client_name);
-    Request1003 request = Request1003(target_client_name, 2, encrypted_payload.size(), encrypted_payload);
-}
+// void Client::get_symmetric_key(string target_client_name) {
+//     User& target_user = get_user_by_client_name(target_client_name);
+//     Request1003 request = Request1003(target_client_name, 2, encrypted_payload.size(), encrypted_payload);
+// }
 
 void Client::send_symmetric_key(string target_client_name) {
     User& target_user = get_user_by_client_name(target_client_name);
+
+    if (target_user.get_pubkey().size() == 0) {
+        throw(NoPublicKey(target_user.get_client_name()));
+    };
 
     symmetricEncryptor symenc = symmetricEncryptor();
     string generated_key = symenc.get_sym_key();
     target_user.set_symkey(generated_key); // Set the new symmetric key to the target user
     PublicEncryptor pubenc = PublicEncryptor(target_user.get_pubkey());
     string encrypted_payload = pubenc.encrypt(generated_key);
-    Request1003 request = Request1003(target_client_name, 2, encrypted_payload.size(), encrypted_payload);
+    Request1003 request = Request1003(target_user.get_client_id(), 2, encrypted_payload.size(), encrypted_payload);
     build_and_send_request(request);
 
     Response2003 response;
     fetch_and_parse_response(response);
 
     if (!(response.client_id == target_user.get_client_id())) {
-        std::cout << "Error - got wrong client_id in response 2003" << std::endl;
+        throw ServerError("Got wrong client_id in response 2003");
+    }
+}
+
+list<Message> Client::pull_messages() {
+    RequestHeaders request_headers = RequestHeaders(client_id, client_version,
+                                                    1004, 0);
+    comm.send_bytes(request_headers.build());
+    
+    Response2004 response;
+    fetch_and_parse_response(response);
+
+    for (const Message& message: response.messages) {
+        // todo - make const vars
+        switch (message.message_type) {
+            case 1:
+                // symmetric key request
+            case 2:
+                // symmetric key send
+            case 3:
+                // text message
+            case 4:
+                // file
+        }
     }
 }

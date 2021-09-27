@@ -20,9 +20,10 @@ class UMessageServer(object):
             while True:
                 request_headers = server_requests.RequestHeaders(reader)
                 await request_headers.fetch()
+                logging.debug(f"Got request {request_headers}")
                 response_cls = server_responses.RESPONSES[request_headers.code] # type: Type[server_responses.Response]
                 response = response_cls(self, reader, writer)
-                await response.fetch_and_respond(request_headers.payload_size)
+                await response.fetch_and_respond(request_headers)
 
         except (asyncio.streams.IncompleteReadError, ConnectionResetError):
             logging.info(f"Client {peer} as disconnected")

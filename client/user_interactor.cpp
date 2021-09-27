@@ -8,7 +8,7 @@
 
 typedef enum user_input_e {
     REGISTER=10,
-    GET_CLIENT_LIST=20,
+    GET_CLIENTS_LIST=20,
     GET_PUBLIC_KEY=30,
     GET_MESSAGES=40,
     SEND_MESSAGE= 50,
@@ -28,7 +28,7 @@ void UserInteractor::display_client_menu() {
     std::cout << "-- " << "MessageU client at your service." << std::endl;
     std::cout << "-- " << std::endl;
     std::cout << "-- " << REGISTER << ") Register" << std::endl;
-    std::cout << "-- " << GET_CLIENT_LIST << ") Request for clients list" << std::endl;    
+    std::cout << "-- " << GET_CLIENTS_LIST << ") Request for clients list" << std::endl;    
     std::cout << "-- " << GET_PUBLIC_KEY << ") Request for public key" << std::endl;
     std::cout << "-- " << GET_MESSAGES << ") Request for waiting messages" << std::endl;
     std::cout << "-- " << SEND_MESSAGE << ") Send a text message" << std::endl;
@@ -92,13 +92,14 @@ void UserInteractor::register_request() {
     try {
         client.register_client(client_name);
         std::cout << "Registered successfully!" << std::endl;
-    } catch (ServerError e) {
-        std::cout << "Registration failed, maybe the user already exists" << std::endl;
+    } catch (const std::exception& e) {
+        std::cout << "Got error: " << e.what() << std::endl;
+        std::cout << "Registration failed, maybe the user already exists" << std::endl << "aborting..." << std::endl;
     }
 }
 
-void UserInteractor::get_client_list() {
-    list<User> client_list = client.get_client_list();
+void UserInteractor::get_clients_list() {
+    list<User> client_list = client.get_clients_list();
     std::cout << "Client list:" << std::endl;
     for (const User& user: client_list) {
         std::cout << "[*] " << user.get_client_name() << std::endl;
@@ -106,7 +107,7 @@ void UserInteractor::get_client_list() {
 }
 
 void UserInteractor::get_public_key() {
-    client.get_client_list(); // resolve all the clients from the server
+    // client.get_client_list(); // resolve all the clients from the server
 
     string client_name = ask_client_name();
     string client_id;
@@ -114,14 +115,14 @@ void UserInteractor::get_public_key() {
     try {
         client_id = client.get_client_id_by_name(client_name);
 
-    } catch (std::out_of_range) {
-        std::cout << "No such client..." << std::endl;
+    } catch (const std::exception& e) {
+        std::cout << "Got error: " << e.what() << std::endl << "aborting..." << std::endl;
         return;
     }
 
     string public_key = client.get_public_key(client_id);
 
-    std::cout << public_key << std::endl;
+    std::cout << "Got public key!" << std::endl;
 }
 
 void UserInteractor::get_messages() {
@@ -133,24 +134,24 @@ void UserInteractor::send_message() {
 }
 
 void UserInteractor::get_symmetric_key() {
-    client.get_client_list(); // resolve all the clients from the server
+    // client.get_client_list(); // resolve all the clients from the server
 
     try {
-        client.get_symmetric_key(ask_client_name());
-    } catch (NoSuchUser e) {
-        std::cout << "Got error: " << e.what() << std::endl;
-        std::cout << "No such user... aborting" << std::endl;
+        // client.get_symmetric_key(ask_client_name());
+    } catch (const std::exception& e) {
+        std::cout << "Got error: " << e.what() << std::endl << "aborting..." << std::endl;
     }
 }
 
 void UserInteractor::send_symmetric_key() {
-    client.get_client_list(); // resolve all the clients from the server
+    // client.get_client_list(); // resolve all the clients from the server
 
     try {
         client.send_symmetric_key(ask_client_name());
-    } catch (NoSuchUser e) {
-        std::cout << "Got error: " << e.what() << std::endl;
-        std::cout << "No such user... aborting" << std::endl;
+        std::cout << "Sent symmetric key successfully!" << std::endl;
+
+    } catch (const std::exception& e) {
+        std::cout << "Got error: " << e.what() << std::endl << "aborting..." << std::endl;;    
     }
 }
 

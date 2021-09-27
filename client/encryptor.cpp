@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "encryptor.h"
 
 PublicEncryptor::PublicEncryptor(const string& key): rsapub(key) {}

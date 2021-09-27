@@ -4,7 +4,7 @@ import logging
 from umessage_server import UMessageServer
 
 
-logging.basicConfig(level=logging.INFO, format="[%(levelname)s]: %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="[%(levelname)s]: %(message)s")
 
 
 async def main():

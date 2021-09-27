@@ -88,9 +88,13 @@ void Response2003::parse(vector<byte> received_bytes) {
 }
 
 void Response2004::parse(vector<byte> received_bytes) {
-    client_id = pop_string(received_bytes, 16);
-    message_id = pop<uint32_t>(received_bytes);
-    message_type = pop<uint8_t>(received_bytes);
-    message_size = pop<uint32_t>(received_bytes);
-    content = pop_string(received_bytes, message_size);
+    while (received_bytes.size() >= 0) {
+        string client_id = pop_string(received_bytes, 16);
+        uint32_t message_id = pop<uint32_t>(received_bytes);
+        uint8_t message_type = pop<uint8_t>(received_bytes);
+        uint32_t message_size = pop<uint32_t>(received_bytes);
+        string content = pop_string(received_bytes, message_size);
+        
+        messages.push_back(Message(message_id, client_id, message_type, content));
+    }
 }

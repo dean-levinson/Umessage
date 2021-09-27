@@ -26,3 +26,7 @@ class RequestHeaders(RequestFetcher):
         received_bytes = await self.reader.readexactly(struct_wrapper.size())
 
         self.client_id, self.version, self.code, self.payload_size = struct_wrapper.unpack(received_bytes)
+
+    def __str__(self):
+        return f"<RequestHeaders client_id={self.client_id}, version={self.version}, " + \
+        f"code={self.code}, payload_size={self.payload_size}>"

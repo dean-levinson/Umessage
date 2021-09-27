@@ -7,6 +7,7 @@
 #include <list>
 
 #include "user.h"
+#include "message.h"
 
 using std::vector;
 using std::string;
@@ -70,12 +71,7 @@ public:
 class Response2004: public ResponseCode
 {
 public:
-    string client_id;
-    uint32_t message_id;
-    uint8_t message_type;
-    uint32_t message_size;
-    string content;
-    
+    list<Message> messages;    
     void parse(vector<byte> received_bytes);
 };
 

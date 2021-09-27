@@ -1,10 +1,12 @@
 import logging
 from asyncio.streams import StreamReader, StreamWriter
+from mmap import ACCESS_READ
 from server_exceptions import UserAlreadyExists
 
 from struct_wrapper import Field, StructWrapper
 from server_consts import *
 from server_utils import null_terminated_bytes_to_str
+from server_requests import RequestHeaders
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -25,10 +27,7 @@ class Response(object):
         self._reader = reader
         self._writer = writer
 
-    async def fetch_request(self):
-        raise NotImplementedError("Abstract class")
-
-    async def respond(self):
+    async def fetch_and_respond(self, request_headers: RequestHeaders):
         raise NotImplementedError("Abstract class")
     
     async def write(self, payload):
@@ -48,13 +47,14 @@ class Response(object):
         await self.respond_headers(len(payload))
         await self.write(payload)
     
-    async def respond_error(self):
+    async def respond_error(self, error_message=None):
+        logging.error(error_message)
         await self.respond_headers(0, code=SERVER_ERROR_CODE)
 
 @response_code(1000)
 class RegisterResponse(Response):
-    async def fetch_and_respond(self, request_size):
-        received_bytes = await self._reader.read(request_size)
+    async def fetch_and_respond(self, request_headers: RequestHeaders):
+        received_bytes = await self._reader.read(request_headers.payload_size)
         client_name, public_key = StructWrapper(Fields.CLIENT_NAME,
                                                 Fields.PUBLIC_KEY).unpack(received_bytes)
 
@@ -67,16 +67,14 @@ class RegisterResponse(Response):
             await self.respond(payload)
 
         except UserAlreadyExists:
-            logging.warning(f"Got register request for an existing client name - '{client_name}'")
-            await self.respond_error()
+            await self.respond_error(f"Got register request for an existing client name - '{client_name}'")
 
 
 @response_code(1001)
 class ClientListResponse(Response):
-    async def fetch_and_respond(self, request_size):
-        if not (request_size == 0):
-            logging.error("Payload size of client list request should be 0")
-            await self.respond_error()
+    async def fetch_and_respond(self, request_headers: RequestHeaders):
+        if not (request_headers.payload_size == 0):
+            await self.respond_error("Payload size of client list request should be 0")
             return
 
         payload = bytes()
@@ -88,22 +86,38 @@ class ClientListResponse(Response):
 
 @response_code(1002)
 class PublicKeyResponse(Response):
-    async def fetch_and_respond(self, request_size):
-        received_bytes = await self._reader.read(request_size)
+    async def fetch_and_respond(self, request_headers: RequestHeaders):
+        received_bytes = await self._reader.read(request_headers.payload_size)
         client_id = StructWrapper(Fields.CLIENT_ID).unpack(received_bytes)[0]
 
         user = self._server.users.get_user_by_client_id(client_id)
 
         if not user:
-            await self.respond_error()
+            await self.respond_error(f"User with client id '{client_id}' not found")
             return
-        
-        # very bad code
-        public_key = user.pubkey
 
         if not user.pubkey:
-            # Todo - realise what I got to do
-            public_key = b"1" * 160
+            await self.respond_error(f"{user} has not public key")
+            return
 
-        payload = StructWrapper(Fields.CLIENT_ID, Fields.PUBLIC_KEY).pack(client_id, public_key)
+        payload = StructWrapper(Fields.CLIENT_ID, Fields.PUBLIC_KEY).pack(client_id, user.pubkey)
         await self.respond(payload)
+
+@response_code(1003)
+class MessageResponse(Response):
+    async def fetch_and_respond(self, request_headers: RequestHeaders):
+        received_bytes = await self._reader.read(request_headers.payload_size)
+        header_fields = (Fields.CLIENT_ID, Fields.MESSAGE_TYPE, Fields.CONTENT_SIZE)
+        header_size = sum(field.size for field in header_fields)
+        bytes_without_payload = received_bytes[:header_size]
+        message_content = received_bytes[header_size:]
+
+        client_id, message_type, content_size = StructWrapper(*header_fields).unpack(bytes_without_payload)
+
+        if len(message_content) != content_size:
+            await self.respond_error("The content length is different from the content_size")
+            return 
+
+        message = self._server.messages.add_message(client_id, request_headers.client_id, message_type, message_content)
+
+        await self.respond(StructWrapper(Fields.CLIENT_ID, Fields.MESSAGE_ID).pack(client_id, message.message_id))

@@ -12,6 +12,7 @@
 #include "requests.h"
 #include "communicator.h"
 #include "user.h"
+#include "message.h"
 
 using std::map;
 using std::vector;
@@ -21,7 +22,13 @@ using std::byte;
 using std::map;
 
 class ServerError : public std::exception {  
+    private:
+    std::string err;
+
     public:  
+        ServerError();    
+        ServerError(std::string err);
+        ServerError(const char* err);
         const char * what() const throw(); 
 };  
 
@@ -31,6 +38,15 @@ class NoSuchUser : public std::exception {
     public:  
         NoSuchUser(const char * err_message);
         NoSuchUser(std::string err_message);
+        const char * what() const throw(); 
+};  
+
+class NoPublicKey : public std::exception {  
+    private:
+        std::string err;
+        std::string client_name;
+    public:  
+        NoPublicKey(const std::string& client_id);
         const char * what() const throw(); 
 };  
 
@@ -54,11 +70,11 @@ public:
     void add_user(User user);
     void connect();
     void register_client(string client_name);
-    list<User> get_client_list();
+    list<User> get_clients_list();
     string get_public_key(string client_id);
     // void send_text_message(string target_client_name, string text);
-    // list<Message> get_messages();
-    void get_symmetric_key(string target_client_name);
+    list<Message> pull_messages();
+    // void get_symmetric_key(string target_client_name);
     void send_symmetric_key(string target_client_name);
 };
 
