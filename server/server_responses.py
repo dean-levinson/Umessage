@@ -43,7 +43,7 @@ class Response(object):
                                                                  code,
                                                                  payload_size))
 
-    async def respond(self, payload):
+    async def respond(self, payload: bytes):
         await self.respond_headers(len(payload))
         await self.write(payload)
     
@@ -121,3 +121,32 @@ class MessageResponse(Response):
         message = self._server.messages.add_message(client_id, request_headers.client_id, message_type, message_content)
 
         await self.respond(StructWrapper(Fields.CLIENT_ID, Fields.MESSAGE_ID).pack(client_id, message.message_id))
+
+@response_code(1004)
+class PullMessagesResponse(Response):
+    async def fetch_and_respond(self, request_headers: RequestHeaders):
+        if not (request_headers.payload_size == 0):
+            await self.respond_error("Payload size of pull messages request should be 0")
+            return
+
+        payloads = []
+
+        for message in self._server.messages.get_client_messages(request_headers.client_id):
+            logging.debug(f"Sending message {message}")
+            payloads.append(StructWrapper(
+                Fields.CLIENT_ID,
+                Fields.MESSAGE_ID,
+                Fields.MESSAGE_TYPE,
+                Fields.CONTENT_SIZE).pack(message.source,
+                                          message.message_id,
+                                          message.message_type,
+                                          len(message.message_content)) + message.message_content)
+
+        logging.debug("Deleting messages from the server")  
+        for message in self._server.messages.get_client_messages(request_headers.client_id):
+            self._server.messages.delete_message(message.message_id)
+
+        if not len(payloads):
+            logging.debug(f"There are no messages for client id '{request_headers.client_id}'")
+
+        await self.respond(b"".join(payloads))

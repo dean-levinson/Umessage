@@ -50,6 +50,15 @@ class NoPublicKey : public std::exception {
         const char * what() const throw(); 
 };  
 
+class NoSymmeticKey : public std::exception {  
+    private:
+        std::string err;
+        std::string client_name;
+    public:  
+        NoSymmeticKey(const std::string& client_id);
+        const char * what() const throw(); 
+};
+
 class Client {
 private:
     uint8_t client_version;
@@ -70,12 +79,13 @@ public:
     void add_user(User user);
     void connect();
     void register_client(string client_name);
-    list<User> get_clients_list();
+    list<User> get_client_list();
     string get_public_key(string client_id);
-    // void send_text_message(string target_client_name, string text);
+    void send_text_message(string target_client_name, string text);
     list<Message> pull_messages();
-    // void get_symmetric_key(string target_client_name);
+    void get_symmetric_key(string target_client_name);
     void send_symmetric_key(string target_client_name);
+    void handle_message(Message& message);
 };
 
 #endif // CLIENT_H_

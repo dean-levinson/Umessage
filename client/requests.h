@@ -57,7 +57,7 @@ private:
     uint32_t content_size;
     string enc_text;
 public:
-    Request1003(string client_id, uint8_t message_type, uint32_t content_size, string enc_text);
+    Request1003(string client_id, uint8_t message_type, string enc_text);
     vector<byte> build() const;
     uint16_t get_code() const;
     };

@@ -2,6 +2,7 @@
 #define MESSAGE_H_
 
 #include <string>
+#include <ostream>
 using std::string;
 
 class Message

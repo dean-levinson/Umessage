@@ -8,13 +8,7 @@
 
 using namespace boost::asio::ip;
 
-int aes_example();
-int rsa_example();
-
 int main(int argc, char* argv[]) {
-   	aes_example();	
-	rsa_example();
-
     // Todo - resolve from file
     address_v4 server_address = make_address_v4("127.0.0.1");
     unsigned short server_port = 5442;

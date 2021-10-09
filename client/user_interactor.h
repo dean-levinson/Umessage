@@ -6,10 +6,12 @@
 class UserInteractor {
     private:
         Client& client;
-        void display_client_menu();
-        unsigned int ask_user_choice();
-        std::string ask_client_name();
-
+        void display_client_menu() const;
+        unsigned int ask_user_choice() const;
+        std::string ask_client_name() const;
+        std::string ask_text() const;
+        void print_message(const Message& message) const;
+        
     public:
         UserInteractor(Client& client);
 

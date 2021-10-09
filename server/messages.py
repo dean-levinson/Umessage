@@ -30,7 +30,7 @@ class Messages(object):
     def add_message(self, to_client: bytes, from_client: bytes, message_type: int, content: bytes) -> Message:
         message_id = self.find_available_message_id()
         message = Message(message_id, to_client, from_client, message_type, content)
-        logging.debug(f"Creating message {message_id} -> {message}")
+        logging.debug(f"Saving message {message_id} -> {message}")
         self._messages[message_id] = message
         self._client_to_message_id.setdefault(to_client, []).append(message_id)
 
@@ -49,8 +49,8 @@ class Messages(object):
         self._client_to_message_id[message.target].remove(message_id)
 
     def get_client_messages(self, client_id: bytes) -> List[Message]:
-        client_messages_id = self._client_to_message_id[client_id]
-        return [self._messages[client_messages_id] for message_id in client_messages_id]
+        client_messages_id = self._client_to_message_id.get(client_id, [])
+        return [self._messages[message_id] for message_id in client_messages_id]
 
     def find_available_message_id(self) -> int:
         while True:

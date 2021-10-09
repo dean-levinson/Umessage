@@ -6,6 +6,8 @@
 #include "user_interactor.h"
 #include "requests.h"
 #include "responses.h"
+#include "encryptor.h"
+#include "decryptor.h"
 
 using namespace boost::asio::ip;
 
@@ -30,23 +32,23 @@ void test_request_headers_build() {
 
 void test_request_1000_build() {
     std::string str = std::string("Hello world");
-    std::vector<std::byte> key;
-    key.push_back(std::byte(11));
-    key.push_back(std::byte(12));
-    key.push_back(std::byte(13));
+    std::string pubkey;
+    pubkey.push_back(11);
+    pubkey.push_back(12);
+    pubkey.push_back(13);
 
     // build target
     uint8_t target[415] = { 0 };
     memcpy(&target[0], &str[0], str.size());
-    memcpy(&target[255], &key[0], key.size());
+    memcpy(&target[255], &pubkey[0], pubkey.size());
 
     // build request
-    Request1000 request = Request1000(str, key);
-    std::vector<std::byte> bytes = request.build();
+    Request1000 request = Request1000(str, pubkey);
+    std::vector<std::byte> payload = request.build();
     
     // compare
-    for(int i = 0; i < bytes.size(); ++i) {
-        assert(target[i] == static_cast<uint8_t>(bytes[i]));
+    for(int i = 0; i < payload.size(); ++i) {
+        assert(target[i] == static_cast<uint8_t>(payload[i]));
     }
 
     std::cout << "[V] test_request_1000_build passed" <<std::endl;
@@ -93,7 +95,7 @@ void test_response_2000_parse() {
 void test_response_2002_parse() {
     // build response
     std::string str(16, '1');
-    auto vec = std::vector<std::byte>(160, std::byte('2'));
+    auto vec = std::string(160, '2');
 
     std::vector<std::byte> response_bytes;
     response_bytes.resize(16 + 160);
@@ -110,12 +112,38 @@ void test_response_2002_parse() {
     std::cout << "[V] test_response_2002_parse passed" <<std::endl;
 }
 
+void test_simple_public_cryptography() {
+    PublicDecryptor dec;
+    PublicEncryptor enc(dec.get_public_key());
+
+    std::string plain("Validation string");
+    std::string result = dec.decrypt(enc.encrypt(plain));
+
+    assert(plain == result);
+
+    std::cout << "[V] test_simple_public_cryptography passed" <<std::endl;
+}
+
+void test_simple_symmetric_cryptography() {
+    SymmetricDecryptor dec;
+    SymmetricEncryptor enc(dec.get_sym_key());
+    
+    std::string plain("Validation string");
+    std::string result = dec.decrypt(enc.encrypt(plain));
+
+    assert(plain == result);
+
+    std::cout << "[V] test_simple_symmetric_cryptography passed" <<std::endl;
+}
+
 int main(int argc, char* argv[]) {
     test_request_headers_build();
     test_request_1000_build();
     test_response_headers_parse();
     test_response_2000_parse();
     test_response_2002_parse();
+    test_simple_public_cryptography();
+    test_simple_symmetric_cryptography();
 
     std::cout << "Press any key to continue . . .";
     std::cin.get();

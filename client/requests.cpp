@@ -80,10 +80,10 @@ vector<byte> Request1002::build() const {
     return request;
 }
 
-Request1003::Request1003(string client_id, uint8_t message_type, uint32_t content_size, string enc_text):
+Request1003::Request1003(string client_id, uint8_t message_type, string enc_text):
     client_id(client_id),
     message_type(message_type),
-    content_size(content_size),
+    content_size(enc_text.size()),
     enc_text(enc_text) {}
 
 vector<byte> Request1003::build() const {
