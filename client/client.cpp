@@ -97,6 +97,16 @@ User& Client::get_user_by_client_id(const string& target_client_id) {
     throw(NoSuchUser(err));
 }
 
+void Client::build_and_send_request(RequestCode& request) {
+    vector<byte> request_payload = request.build();
+    RequestHeaders request_headers = RequestHeaders(client_id, client_version,
+                                                    request.get_code(),
+                                                    request_payload.size());
+
+    comm.send_bytes(request_headers.build());
+    comm.send_bytes(request_payload);
+}
+
 void Client::fetch_and_parse_response(ResponseCode& response) {
     ResponseHeaders response_headers; 
     response_headers.parse(comm.receive_bytes(response_headers.size()));
@@ -106,16 +116,6 @@ void Client::fetch_and_parse_response(ResponseCode& response) {
     }
 
     response.parse(comm.receive_bytes(response_headers.payload_size));
-}
-
-void Client::build_and_send_request(RequestCode& request) {
-    vector<byte> request_payload = request.build();
-    RequestHeaders request_headers = RequestHeaders(client_id, client_version,
-                                                    request.get_code(),
-                                                    request_payload.size());
-
-    comm.send_bytes(request_headers.build());
-    comm.send_bytes(request_payload);
 }
 
 void Client::register_client(string client_name) {
