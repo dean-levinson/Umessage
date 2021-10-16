@@ -3,6 +3,7 @@
 #include <vector>
 #include <boost/asio.hpp>
 
+#include "cryptopp_wrapper/Base64Wrapper.h"
 #include "user_interactor.h"
 #include "requests.h"
 #include "responses.h"
@@ -136,6 +137,17 @@ void test_simple_symmetric_cryptography() {
     std::cout << "[V] test_simple_symmetric_cryptography passed" <<std::endl;
 }
 
+void test_base64_encoding() {
+    PublicDecryptor dec;
+
+    string privkey = dec.get_private_key();
+    string result = Base64Wrapper::decode(Base64Wrapper::encode(privkey));
+
+    assert(privkey == result);
+
+    std::cout << "[V] test_base64_encoding passed" <<std::endl;
+}
+
 int main(int argc, char* argv[]) {
     test_request_headers_build();
     test_request_1000_build();
@@ -144,6 +156,7 @@ int main(int argc, char* argv[]) {
     test_response_2002_parse();
     test_simple_public_cryptography();
     test_simple_symmetric_cryptography();
+    test_base64_encoding();
 
     std::cout << "Press any key to continue . . .";
     std::cin.get();

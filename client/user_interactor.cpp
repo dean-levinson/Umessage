@@ -3,6 +3,7 @@
 #include <exception>
 #include <stdexcept>
 
+#include "exceptions.h"
 #include "user_interactor.h"
 
 
@@ -25,6 +26,10 @@ UserInteractor::UserInteractor(Client& client): client(client) {
 void UserInteractor::display_client_menu() const {
     std::cout << "\n-----------------------------------------" << std::endl;
     std::cout << "-----------------------------------------" << std::endl;
+    std::string client_name(client.get_client_name());
+    if (client_name.length()) {
+        std::cout << "-- " << "Hello " << client_name << "!" << std::endl;
+    }
     std::cout << "-- " << "MessageU client at your service." << std::endl;
     std::cout << "-- " << std::endl;
     std::cout << "-- " << REGISTER << ") Register" << std::endl;
@@ -95,9 +100,8 @@ std::string UserInteractor::ask_text() const {
         std::cout << "Enter text: ";
         std::getline(std::cin, text);
 
-        // text must be bigger than 2 bytes - todo change
-        if (text.size() < 2) {
-            std::cout << "Invalid length - text must be bigger than 2 bytes" << std::endl;
+        if (text.size() < 1) {
+            std::cout << "Invalid length - text must be bigger than 0 bytes" << std::endl;
         } else {
             valid_text = true;
         }
@@ -121,8 +125,6 @@ void UserInteractor::get_client_list() {
 }
 
 void UserInteractor::get_public_key() {
-    // client.get_client_list(); // resolve all the clients from the server
-
     string client_name = ask_client_name();
     string client_id = client.get_client_id_by_name(client_name);
     string public_key = client.get_public_key(client_id);
@@ -176,13 +178,11 @@ void UserInteractor::send_message() {
 }
 
 void UserInteractor::get_symmetric_key() {
-    // client.get_client_list(); // resolve all the clients from the server
     client.get_symmetric_key(ask_client_name());
     std::cout << "Sent symmetric key request successfully!" << std::endl;
 }
 
 void UserInteractor::send_symmetric_key() {
-    // client.get_client_list(); // resolve all the clients from the server
     client.send_symmetric_key(ask_client_name());
     std::cout << "Sent symmetric key successfully!" << std::endl;
 }

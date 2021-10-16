@@ -2,11 +2,12 @@
 #define CLIENT_H_
 
 #include <string>
+#include <exception>
 #include <vector>
 #include <map>
 #include <list>
 #include <map>
-#include <exception>
+#include <filesystem>
 
 #include "responses.h"
 #include "requests.h"
@@ -21,44 +22,6 @@ using std::list;
 using std::byte;
 using std::map;
 
-class ServerError : public std::exception {  
-    private:
-    std::string err;
-
-    public:  
-        ServerError();    
-        ServerError(std::string err);
-        ServerError(const char* err);
-        const char * what() const throw(); 
-};  
-
-class NoSuchUser : public std::exception {  
-    private:
-        std::string internal_message;
-    public:  
-        NoSuchUser(const char * err_message);
-        NoSuchUser(std::string err_message);
-        const char * what() const throw(); 
-};  
-
-class NoPublicKey : public std::exception {  
-    private:
-        std::string err;
-        std::string client_name;
-    public:  
-        NoPublicKey(const std::string& client_id);
-        const char * what() const throw(); 
-};  
-
-class NoSymmeticKey : public std::exception {  
-    private:
-        std::string err;
-        std::string client_name;
-    public:  
-        NoSymmeticKey(const std::string& client_id);
-        const char * what() const throw(); 
-};
-
 class Client {
 private:
     uint8_t client_version;
@@ -66,6 +29,7 @@ private:
     string privkey;
     string pubkey;
     string client_id;
+    string client_name;
     Communicator comm;
 
     /**
@@ -85,6 +49,22 @@ private:
      */
     void fetch_and_parse_response(ResponseCode& response);
     
+    /**
+     * Open "me.info" file from current directory.
+     * If exists - read and update register info accordingly, and return true.
+     * Else - return false. 
+     * @return bool - Indicates weather the reading was successful.
+     */
+    bool get_register_info_from_file();
+
+    /**
+     * Creates "me.info" file with the register parameters, in the following format:
+     * Line 1 - Full name.
+     * Line 2 - Client id in ascii.
+     * Line 3 - Private key in base64.
+     */
+    void update_register_info_into_file();
+
 public:
     /**
      * Construct a new Client object.
@@ -100,6 +80,13 @@ public:
      * @param server_port - Server's port
      */
     Client(address_v4 server_address, unsigned short server_port);
+    
+    /**
+     * Get the client name of the client. If the client is not registered yet, returns empty string.
+     * 
+     * @return string 
+     */
+    string get_client_name();
 
     /**
      * Get the client id by the client name, from known users (resolved by get_client_list).

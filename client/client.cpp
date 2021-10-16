@@ -1,64 +1,50 @@
 #include <iostream>
 #include <algorithm>
+#include <fstream>
+#include <filesystem>
+#include <iomanip>
 
 #include "cryptopp_wrapper/RSAWrapper.h"
 #include "cryptopp_wrapper/AESWrapper.h"
+#include "cryptopp_wrapper/Base64Wrapper.h"
 #include "client.h"
 #include "requests.h"
 #include "responses.h"
 #include "encryptor.h"
 #include "decryptor.h"
 #include "message.h"
+#include "exceptions.h"
 
 #define CLIENT_VERSION (2)
 
-ServerError::ServerError(): err() {}
+static const char * INFO_FILE_PATH = "me.info";
 
-ServerError::ServerError(std::string err): err(err) {}
-
-ServerError::ServerError(const char* err): err(err) {}
-
-const char * ServerError::what() const throw() {
-    if (err.length() != 0) {
-        return err.c_str();
+static string ascii_to_hex(const string& ascii_str) {
+    string result;
+    for (auto it = ascii_str.begin(); it != ascii_str.end(); std::advance(it, 2)) {
+        string ascii_var;
+        ascii_var += *it;
+        ascii_var += *std::next(it);
+        result += static_cast<char>(std::stoi(ascii_var, 0, 16));
     }
-
-    return "Server error"; 
+    return result;
 }
 
-NoSuchUser::NoSuchUser(std::string err_msg): internal_message(err_msg) {
-    internal_message += "\nConsider calling 'Get clients list'...";
+static string hex_to_ascii(const string& hex_str) {
+    std::stringstream ss;
+    for (auto it = hex_str.begin(); it != hex_str.end(); ++it) {
+        ss << std::setw(2) << std::setfill('0') << std::hex << ((int)*it & 0xff);
+    }
+    return ss.str();
 }
 
-NoSuchUser::NoSuchUser(const char * err_msg): NoSuchUser(std::string(err_msg)) {}
-
-const char * NoSuchUser::what() const throw() {
-    return internal_message.c_str();  
-}
-
-NoPublicKey::NoPublicKey(const std::string& client_name): client_name(client_name) {
-    err = string("User ") + "'" + client_name + "''s public key not found.\n"
-     "Consider calling 'Request for public key'...";
-}
-
-const char * NoPublicKey::what() const throw() {
-    return err.c_str();
-}
-
-NoSymmeticKey::NoSymmeticKey(const std::string& client_name): client_name(client_name) {
-    err = string("User ") + "'" + client_name + "''s symmetric key not found.\n"
-     "Consider calling 'Send a request for symmetric key'...";
-}
-
-const char * NoSymmeticKey::what() const throw() {
-    return err.c_str();
-}
-
-Client::Client(tcp::endpoint endpoint): client_version(CLIENT_VERSION), comm(endpoint) {
-    // todo - read details from info file
-    PublicDecryptor dec;
-    pubkey = dec.get_public_key();
-    privkey = dec.get_private_key();
+Client::Client(tcp::endpoint endpoint): client_version(CLIENT_VERSION), comm(endpoint), client_id(), client_name() {
+    if (!get_register_info_from_file()) {
+        // Generates new pair of keys because there is no register file.
+        PublicDecryptor dec;
+        pubkey = dec.get_public_key();
+        privkey = dec.get_private_key();
+    }
 }
 
 Client::Client(address_v4 server_address, unsigned short server_port): Client(tcp::endpoint(server_address, server_port)) {}
@@ -67,12 +53,73 @@ void Client::connect() {
     comm.connect();
 }
 
+string Client::get_client_name() {
+    return client_name;
+}
+
+bool Client::get_register_info_from_file() {
+    if (!std::filesystem::is_regular_file(INFO_FILE_PATH)) {
+        return false;        
+    }
+
+    std::ifstream infofile(INFO_FILE_PATH);
+    if (!infofile.is_open()) {
+        throw(std::runtime_error("Info file exists but cannot be opened"));
+    }
+
+    string client_id_in_ascii;
+    string privkey_in_base64;
+
+    // Read Client name
+    std::getline(infofile, this->client_name);
+
+    // Read Client id in ascii
+    std::getline(infofile, client_id_in_ascii);
+
+    this->client_id = ascii_to_hex(client_id_in_ascii);
+
+    // Read private key in base64. We cannot read one line because Base64Wrapper separates output into lines.
+    // So we read until the end of the file with rdbuf.
+    std::stringstream buffer;
+    buffer << infofile.rdbuf();
+    privkey_in_base64 = buffer.str();
+
+    this->privkey = Base64Wrapper::decode(privkey_in_base64);
+
+    infofile.close();
+
+    return true;
+}
+
+void Client::update_register_info_into_file() {
+    if (std::filesystem::is_regular_file(INFO_FILE_PATH)) {
+        throw(std::runtime_error("Info file already exist"));
+    }
+
+    std::ofstream infofile(INFO_FILE_PATH);
+
+    if (!infofile.is_open()) {
+        throw(std::runtime_error("Info file exists but cannot be opened"));
+    }
+
+    // Write client_name
+    infofile << client_name << std::endl;
+
+    // Write client id in ascii
+    infofile << hex_to_ascii(client_id) << std::endl;
+
+    // Write private key in base64
+    infofile << Base64Wrapper::encode(privkey) << std::endl;
+
+    infofile.close();
+}
+
 string Client::get_client_id_by_name(const string& target_client_name) const {
     if (users.count(target_client_name)) {
         return users.at(target_client_name).get_client_id();
     }
 
-    std::string err = "There is no user with client name '" + target_client_name + "'";
+    std::string err = "There is no other user with client name '" + target_client_name + "'";
     throw(NoSuchUser(err));
 }
 
@@ -82,7 +129,7 @@ User& Client::get_user_by_client_name(const string& target_client_name) {
         return users.at(target_client_name);
     }
 
-    std::string err = "There is no user with client name '" + target_client_name + "'";
+    std::string err = "There is no other user with client name '" + target_client_name + "'";
     throw(NoSuchUser(err));
 }
 
@@ -118,9 +165,12 @@ void Client::fetch_and_parse_response(ResponseCode& response) {
     response.parse(comm.receive_bytes(response_headers.payload_size));
 }
 
-void Client::register_client(string client_name) {
-    // Todo - if client_id member is set, throw excpetion ClientAlreadyRegistered
-    Request1000 request_1000 = Request1000(client_name, pubkey);
+void Client::register_client(string new_client_name) {
+    if (client_id.size()) {
+        throw(AlreadyRegistered());
+    };
+
+    Request1000 request_1000 = Request1000(new_client_name, pubkey);
     build_and_send_request(request_1000);
 
     Response2000 response;
@@ -130,12 +180,16 @@ void Client::register_client(string client_name) {
         throw(ServerError("Registration Failed. Maybe the user already exists..."));
     }
 
-    // Add myself to the users list
-    User myself = User(response.client_id, client_name);
-    myself.set_pubkey(pubkey);
-    add_user(std::move(myself));
+    // // Add myself to the users list
+    // User myself = User(response.client_id, new_client_name);
+    // myself.set_pubkey(pubkey);
+    // add_user(std::move(myself));
 
+    client_name = new_client_name;
     client_id = response.client_id;
+
+    // Update new register params into info file.
+    update_register_info_into_file();
 }
 
 list<User> Client::get_client_list() {
@@ -177,6 +231,10 @@ void Client::send_text_message(string target_client_name, string text) {
 
     if (target_user.get_symkey().size() == 0) {
         throw(NoSymmeticKey(target_user.get_client_name()));
+    };
+
+    if (target_user.get_client_id() == client_id) {
+        throw(std::invalid_argument("Can't send yourself text messages"));
     };
 
     SymmetricEncryptor encryptor(target_user.get_symkey());
@@ -260,11 +318,6 @@ void Client::handle_message(Message& message) {
         }
         case 2:
         {   
-            // Decrypt and save the new symmetric key.
-            if (other_user.get_pubkey().size() == 0) {
-                throw(NoPublicKey(other_user.get_client_name()));
-            };
-
             PublicDecryptor decryptor(privkey);
             other_user.set_symkey(decryptor.decrypt(message.content));
             break;
