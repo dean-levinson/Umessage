@@ -10,7 +10,7 @@ using boost::asio::ip::tcp;
 Communicator::Communicator(tcp::endpoint endpoint): context(), socket(context), endpoint(endpoint) {}
 
 void Communicator::connect() {
-    std::cout << "Connecting to endpoint " << endpoint << std::endl;
+    std::cout << "Connecting to endpoint " << endpoint << "..." << std::endl;
     socket.connect(endpoint);    
 }
 
