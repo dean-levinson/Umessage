@@ -21,7 +21,11 @@ class UMessageServer(object):
                 request_headers = server_requests.RequestHeaders(reader)
                 await request_headers.fetch()
                 logging.debug(f"Got request {request_headers}")
-                response_cls = server_responses.RESPONSES[request_headers.code] # type: Type[server_responses.Response]
+                try:
+                    response_cls = server_responses.RESPONSES[request_headers.code] # type: Type[server_responses.Response]
+                except KeyError: # No such code
+                    logging.error("Got unknown request code from client. ignoring...")
+                    continue
                 response = response_cls(self, reader, writer)
                 await response.fetch_and_respond(request_headers)
 

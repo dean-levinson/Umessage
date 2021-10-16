@@ -1,6 +1,7 @@
 #include "user.h"
 
-User::User(string client_id, string client_name): client_id(client_id), client_name(client_name) {}
+User::User(string client_id, string client_name): client_id(client_id), client_name(client_name), pubkey(), symkey() {}
+User::User(): client_id(), client_name(), pubkey(), symkey() {};
 
 string User::get_client_id() const {
     return client_id;

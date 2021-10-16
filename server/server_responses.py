@@ -115,7 +115,8 @@ class MessageResponse(Response):
         client_id, message_type, content_size = StructWrapper(*header_fields).unpack(bytes_without_payload)
 
         if len(message_content) != content_size:
-            await self.respond_error("The content length is different from the content_size")
+            await self.respond_error(f"The content length is different from the content_size. "
+                                     f"content length - {len(message_content)}, content size - {content_size}")
             return 
 
         message = self._server.messages.add_message(client_id, request_headers.client_id, message_type, message_content)
@@ -142,7 +143,7 @@ class PullMessagesResponse(Response):
                                           message.message_type,
                                           len(message.message_content)) + message.message_content)
 
-        logging.debug("Deleting messages from the server")  
+        # Deleting messages from the server
         for message in self._server.messages.get_client_messages(request_headers.client_id):
             self._server.messages.delete_message(message.message_id)
 

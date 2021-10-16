@@ -179,7 +179,7 @@ public:
      * 
      * @param target_client_name - The name of the target client
      */
-    void get_symmetric_key(string target_client_name);
+    void get_symmetric_key(const string& target_client_name);
 
     /**
      * Generates symmetric key for the communcation between the client and the target_client (by name),
@@ -187,7 +187,24 @@ public:
      * 
      * @param target_client_name - The name of the target client.
      */
-    void send_symmetric_key(string target_client_name);
+    void send_symmetric_key(const string& target_client_name);
+
+    /**
+     * Send file to target client.
+     *
+     * @param target_client_name - The target client to send to. 
+     * @param file_path - The path of the file that should be sent.
+     */
+    void send_file(const string& target_client_name, const string& file_path);
+    
+    /**
+     * Save the given content in temporary path under %TMP%.
+     * Returns the full path of the new file. 
+     * 
+     * @param file_content - The content of the file
+     * @return std::string - The path of the temporary file.
+     */
+    std::string save_temp_file(const string& file_content);
 
     /**
      * Handle a message from the client, and change it inplace.

@@ -2,10 +2,12 @@
 #include <string>
 #include <exception>
 #include <stdexcept>
+#include <boost/filesystem.hpp>
 
 #include "exceptions.h"
 #include "user_interactor.h"
 
+namespace fs = boost::filesystem;
 
 typedef enum user_input_e {
     REGISTER=10,
@@ -15,6 +17,7 @@ typedef enum user_input_e {
     SEND_MESSAGE= 50,
     GET_SYMMETRIC_KEY = 51,
     SEND_SYMMETRIC_KEY = 52,
+    SEND_FILE = 53,
     EXIT_CLIENT = 0
 } user_input;
 
@@ -38,6 +41,7 @@ void UserInteractor::display_client_menu() const {
     std::cout << "-- " << SEND_MESSAGE << ") Send a text message" << std::endl;
     std::cout << "-- " << GET_SYMMETRIC_KEY << ") Send a request for symmetric key" << std::endl;
     std::cout << "-- " << SEND_SYMMETRIC_KEY << ") Send your symmetric key" << std::endl;
+    std::cout << "-- " << SEND_FILE << ") Send a file" << std::endl;
     std::cout << "-- " << EXIT_CLIENT << ") Exit client" << std::endl;
     std::cout << "-- " << std::endl;
     std::cout << "-----------------------------------------" << std::endl;
@@ -71,10 +75,10 @@ unsigned int UserInteractor::ask_user_choice() const {
 }
 
 std::string UserInteractor::ask_client_name() const {
-    bool client_name_valid = false;
+    bool is_valid = false;
     std::string client_name;
 
-    while (!client_name_valid) {
+    while (!is_valid) {
         std::cout << "Enter client name: ";
         std::getline(std::cin, client_name);
 
@@ -84,11 +88,31 @@ std::string UserInteractor::ask_client_name() const {
         } else if (client_name.size() == 0) {
             std::cout << "Invalid input - client name cannot be empty" << std::endl;
         } else {
-            client_name_valid = true;
+            is_valid = true;
         }
     }
 
     return client_name;
+}
+
+std::string UserInteractor::ask_file_path() const {
+    bool is_valid = false;
+    std::string file_path;
+
+    while (!is_valid) {
+        std::cout << "Enter file path (Press ENTER to exit): ";
+        std::getline(std::cin, file_path);
+
+        if (!file_path.length()) { // Exiting
+            return string();
+        } else if (fs::is_regular_file(file_path)) {
+            is_valid = true;
+        } else {
+            std::cout << "File doesn't exist! try again..." << std::endl;
+        }
+    }
+
+    return file_path;
 }
 
 std::string UserInteractor::ask_text() const {
@@ -151,21 +175,7 @@ void UserInteractor::print_message(const Message& message) const {
     std::cout << "Message from: " << other_name << std::endl;  
     std::cout << "Message type: " << static_cast<int>(message.message_type) << std::endl;
     std::cout << "Message content: " << std::endl;
-
-    switch (message.message_type) {
-        case (1):
-            std::cout << "Request for symmetric key. Creating and sending symmetric key..." << std::endl;
-            break;
-        case (2):
-            std::cout << "Symmetric key received. Accepting..." << std::endl;
-            break;
-        case (3):
-            std::cout << message.content << std::endl;
-            break;
-        case (4):
-            std::cout << "Got file in path: " << std::endl; // todo - complete
-            break;
-    }
+    std::cout << message.content << std::endl;
     std::cout << "------<EOM>------" << std::endl;
 }
 
@@ -184,6 +194,19 @@ void UserInteractor::get_symmetric_key() {
 void UserInteractor::send_symmetric_key() {
     client.send_symmetric_key(ask_client_name());
     std::cout << "Sent symmetric key successfully!" << std::endl;
+}
+
+void UserInteractor::send_file() {
+    std::string target_client_name = ask_client_name();
+    std::string file_path = ask_file_path();
+
+    if (!file_path.length()) {
+        return;
+    }
+
+    client.send_file(target_client_name, file_path);
+
+    std::cout << "Sent file successfully!" << std::endl;
 }
 
 void UserInteractor::start_loop() {
@@ -228,7 +251,12 @@ void UserInteractor::start_loop() {
                     send_symmetric_key();
                     break;
 
-                case EXIT_CLIENT :
+                case SEND_FILE:
+                    std::cout << "[!] got sending file request" << std::endl;
+                    send_file();
+                    break;
+
+                case EXIT_CLIENT:
                     std::cout << "[!] got exit request" << std::endl; 
                     should_exit = true;
                     std::cout << "Thanks for using Umessage! Goodbye :)" << std::endl;

@@ -3,6 +3,12 @@
 #include <fstream>
 #include <filesystem>
 #include <iomanip>
+#include <sstream>
+#include <stdexcept>
+#include <stdio.h>
+#include <cstdlib>
+#include <iterator>
+#include <boost/filesystem.hpp>
 
 #include "cryptopp_wrapper/RSAWrapper.h"
 #include "cryptopp_wrapper/AESWrapper.h"
@@ -36,6 +42,25 @@ static string hex_to_ascii(const string& hex_str) {
         ss << std::setw(2) << std::setfill('0') << std::hex << ((int)*it & 0xff);
     }
     return ss.str();
+}
+
+/**
+ * Return string that contains the file data.
+ */
+static string get_file_content(const string& file_path) {
+    if (!boost::filesystem::is_regular_file(file_path)) {
+        throw(std::invalid_argument("Given file doesn't exist"));
+    }
+    
+    std::ifstream file_obj(file_path, std::ios::binary);
+    if (!file_obj.is_open()) {
+        throw(std::runtime_error("Cannot open file"));
+    }
+
+    std::string content(std::istreambuf_iterator<char>{file_obj},
+                        {});
+
+    return content;
 }
 
 Client::Client(tcp::endpoint endpoint): client_version(CLIENT_VERSION), comm(endpoint), client_id(), client_name() {
@@ -250,7 +275,7 @@ void Client::send_text_message(string target_client_name, string text) {
     }
 }
 
-void Client::get_symmetric_key(string target_client_name) {
+void Client::get_symmetric_key(const string& target_client_name) {
     User& target_user = get_user_by_client_name(target_client_name);
     Request1003 request = Request1003(target_user.get_client_id(), 1, std::string());
 
@@ -264,19 +289,47 @@ void Client::get_symmetric_key(string target_client_name) {
     }
 }
 
-void Client::send_symmetric_key(string target_client_name) {
+void Client::send_symmetric_key(const string& target_client_name) {
     User& target_user = get_user_by_client_name(target_client_name);
 
     if (target_user.get_pubkey().size() == 0) {
         throw(NoPublicKey(target_user.get_client_name()));
     };
 
-    SymmetricEncryptor symenc = SymmetricEncryptor();
-    string generated_key = symenc.get_sym_key();
-    target_user.set_symkey(generated_key); // Set the new symmetric key to the target user
+    if (!target_user.get_symkey().length()) {
+        SymmetricEncryptor symenc = SymmetricEncryptor();
+        string generated_key = symenc.get_sym_key();
+        target_user.set_symkey(generated_key); // Set the new symmetric key to the target user
+    }
     PublicEncryptor pubenc = PublicEncryptor(target_user.get_pubkey());
-    string encrypted_payload = pubenc.encrypt(generated_key);
+    string encrypted_payload = pubenc.encrypt(target_user.get_symkey());
     Request1003 request = Request1003(target_user.get_client_id(), 2, encrypted_payload);
+    build_and_send_request(request);
+
+    Response2003 response;
+    fetch_and_parse_response(response);
+
+    if (!(response.client_id == target_user.get_client_id())) {
+        throw ServerError("Got wrong client_id in response 2003");
+    }
+}
+
+void Client::send_file(const string& target_client_name, const string& file_path) {
+    User& target_user = get_user_by_client_name(target_client_name);
+
+    if (target_user.get_symkey().size() == 0) {
+        throw(NoSymmeticKey(target_user.get_client_name()));
+    };
+
+    if (target_user.get_client_id() == client_id) {
+        throw(std::invalid_argument("Can't send yourself a file"));
+    };
+
+    SymmetricEncryptor encryptor(target_user.get_symkey());
+
+    std::string file_content = get_file_content(file_path); // todo - delete
+    Request1003 request(target_user.get_client_id(), 4, encryptor.encrypt(get_file_content(file_path)));
+
     build_and_send_request(request);
 
     Response2003 response;
@@ -299,32 +352,79 @@ list<Message> Client::pull_messages() {
         try {
             handle_message(message);
         } catch (const std::exception& e) {
-            std::cout << "DEBUG: passing message handling because of error: " << e.what() << std::endl;
+            continue;
         }
     }
 
     return response.messages;
 }
 
+std::string Client::save_temp_file(const std::string& file_content) {
+    boost::filesystem::path dir_path = getenv("TMP");
+    boost::filesystem::path full_path;
+    bool valid_path = false;
+    while (!valid_path) {
+        boost::filesystem::path file_name = tmpnam(NULL);
+        full_path = dir_path / file_name;
+
+        if (!boost::filesystem::exists(full_path)) {
+            valid_path = true;
+        }
+    }
+
+    std::ofstream tmp_file(full_path, std::ios::binary);
+    if (!tmp_file.is_open()) {
+        throw(std::runtime_error("Cannot open tmp file"));
+    }
+
+    tmp_file.write(file_content.c_str(), file_content.length());
+    tmp_file.close();
+    
+    return full_path.string();
+}
+
 void Client::handle_message(Message& message) {
+    try {
+        get_user_by_client_id(message.from_client_id); // todo - fix reference problem
+    } catch (const std::exception& e) {
+        // Change the content of the message in case this exception will be caught.
+        message.content = std::string("Failed resolving sender - Got error: ") + e.what();
+        throw;
+    }
+
     User& other_user = get_user_by_client_id(message.from_client_id);
+
     // todo - make const vars
     switch (message.message_type) {
         case 1:
-        {
-            // send symmetric key to other.
-            send_symmetric_key(other_user.get_client_name());
+        {   
+            try {
+                // send symmetric key to other.
+                send_symmetric_key(other_user.get_client_name());
+                message.content = std::string("Request for symmetric key. Creating and sending symmetric key...");
+            } catch (const std::exception& e) {
+                // Change the content of the message in case this exception will be caught.
+                message.content = std::string("Failed sending symmetric key - Got error: ") + e.what();
+                throw;
+            }
             break;
         }
         case 2:
         {   
-            PublicDecryptor decryptor(privkey);
-            other_user.set_symkey(decryptor.decrypt(message.content));
+            try {
+                PublicDecryptor decryptor(privkey);
+                other_user.set_symkey(decryptor.decrypt(message.content));
+                message.content = std::string("Symmetric key received. Accepting...");
+            } catch (const std::exception& e) {
+                // Change the content of the message in case this exception will be caught.
+                message.content = std::string("Failed receiving symmetric key - Got error: ") + e.what();
+                throw;
+            }
             break;
         }
         case 3:
         {
-            // Decrypt the message inplace. Probably will change dua refactor.
+            // Decrypt the message inplace.
 
             try {
                 string other_symkey = other_user.get_symkey();
@@ -336,14 +436,31 @@ void Client::handle_message(Message& message) {
 
             } catch (const std::exception& e) {
                 // Change the content of the message in case this exception will be caught.
-                message.content = std::string("Can't decrypt message");
+                message.content = std::string("Couldn't decrypt message - Got error: ") + e.what();
                 throw;
             }
             break;
         }
 
         case 4:
-            // file - TODO
+        {
+            // Decrypt the file, and change the message content implace accordingly.
+            try {
+                string other_symkey = other_user.get_symkey();
+                if (!other_symkey.length()) {
+                    throw(NoSymmeticKey(other_user.get_client_name()));
+                }
+                SymmetricDecryptor decryptor(other_symkey);
+
+                // Decrypt the file, and save it path in the message content.
+                message.content = string("Got new file! ") + save_temp_file(decryptor.decrypt(message.content));
+
+            } catch (const std::exception& e) {
+                // Change the content of the message in case this exception will be caught.
+                message.content = std::string("Couldn't decrypt file - Got error: ") + e.what();
+                throw;
+            }
             break;
+        }
     }
 }

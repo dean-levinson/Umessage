@@ -17,6 +17,7 @@ private:
 
 public:
     User(string client_id, string client_name);
+    User();
     string get_client_id() const;
     string get_client_name() const;
     string get_pubkey() const;
