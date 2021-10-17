@@ -13,5 +13,7 @@ class Fields(object):
     CONTENT_SIZE = UintField(4)
     MESSAGE_ID = UintField(4)
 
-SERVER_VERSION = 1
+SERVER_VERSION = 2
 SERVER_ERROR_CODE = 9000
+PORT_INFO_PATH = "port.info"
+DB_FILE_PATH = "server.db"

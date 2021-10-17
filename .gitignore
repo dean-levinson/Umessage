@@ -36,3 +36,4 @@ __pycache__
 *.pyc
 me.info
 server.info
+port.info

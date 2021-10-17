@@ -10,8 +10,6 @@
 #include <iterator>
 #include <boost/filesystem.hpp>
 
-#include "cryptopp_wrapper/RSAWrapper.h"
-#include "cryptopp_wrapper/AESWrapper.h"
 #include "cryptopp_wrapper/Base64Wrapper.h"
 #include "client.h"
 #include "requests.h"
