@@ -96,11 +96,11 @@ class PublicKeyResponse(Response):
             await self.respond_error(f"User with client id '{client_id}' not found")
             return
 
-        if not user.pubkey:
+        if not user.public_key:
             await self.respond_error(f"{user} has not public key")
             return
 
-        payload = StructWrapper(Fields.CLIENT_ID, Fields.PUBLIC_KEY).pack(client_id, user.pubkey)
+        payload = StructWrapper(Fields.CLIENT_ID, Fields.PUBLIC_KEY).pack(client_id, user.public_key)
         await self.respond(payload)
 
 @response_code(1003)

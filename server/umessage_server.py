@@ -20,12 +20,18 @@ class UMessageServer(object):
             while True:
                 request_headers = server_requests.RequestHeaders(reader)
                 await request_headers.fetch()
-                logging.debug(f"Got request {request_headers}")
+
+                # Update user's last seen
+                user = self.users.update_user_last_seen(self.users.get_user_by_client_id(request_headers.client_id))
+
+                logging.debug(f"Got request {request_headers} from {user}")
+                
                 try:
                     response_cls = server_responses.RESPONSES[request_headers.code] # type: Type[server_responses.Response]
                 except KeyError: # No such code
                     logging.error("Got unknown request code from client. ignoring...")
                     continue
+
                 response = response_cls(self, reader, writer)
                 await response.fetch_and_respond(request_headers)
 
