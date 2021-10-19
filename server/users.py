@@ -46,7 +46,9 @@ class Users(DBManaged):
 
     @DBManaged.db_transaction
     def get_user_by_client_name(self, client_name: str):
-        results = self._cur.execute(f"SELECT ID, Name, PublicKey, LastSeen FROM {self._TABLE_NAME} WHERE Name = ?;", (client_name, )).fetchall()
+        results = self._cur.execute(f"SELECT ID, Name, PublicKey, LastSeen FROM \
+         {self._TABLE_NAME} WHERE Name = ?;", (client_name, )).fetchall()
+
         if len(results) > 1:
             raise DBError(f"Found more than 1 client with client_name {client_name}")
 
@@ -75,8 +77,7 @@ class Users(DBManaged):
     @DBManaged.db_transaction
     def __iter__(self):
         all_results = self._cur.execute(f"SELECT ID, Name, PublicKey, LastSeen FROM {self._TABLE_NAME};").fetchall()
-        return iter([User(client_id, client_name, public_key, last_seen) for client_id, client_name,
-         public_key, last_seen in all_results])
+        return iter([self._get_user_from_db_result(result) for result in all_results])
 
 
     @DBManaged.db_transaction
