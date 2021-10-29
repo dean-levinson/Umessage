@@ -12,6 +12,10 @@ public:
     string from_client_id;
     uint8_t message_type;
     string content;
+
+    /**
+     * Construct a new Message object.
+     */
     Message(uint32_t message_id, string from_client_id, uint8_t message_type, string content);
 };
 

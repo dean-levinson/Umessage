@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+/**
+ * Determines weather the machine's processor is big endian.
+ * 
+ * @return bool 
+ */
 static bool is_big_endian(void)
 {
     union {
@@ -13,8 +18,21 @@ static bool is_big_endian(void)
     return test_int.c[0] == 1; 
 }
 
+/**
+ * Static boolian that indicates weather the machine's processor is big endian.
+ * Used instead of calling is_big_endian every time.
+ */
 static bool is_be = is_big_endian();
 
+/**
+ * Template function that receives a variable and turns it into a 
+ * little endian version of the same type (i.e., swap the direction of
+ * the bytes in the variable).
+ * 
+ * @tparam T - The type of the variable.
+ * @param u - The variable.
+ * @return T - The little endian version of the variable.
+ */
 template <typename T>
 T little_endian(T u)
 {

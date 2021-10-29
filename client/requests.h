@@ -27,7 +27,15 @@ class RequestCode {
 protected:
     uint16_t code;
 public:
+    /**
+     * Builds the request into std::vector<byte>
+     */
     virtual vector<byte> build() const = 0;   
+    /**
+     * Abstract method.
+     * 
+     * @return uint16_t - The request code.
+     */
     virtual uint16_t get_code() const = 0; 
 };
 

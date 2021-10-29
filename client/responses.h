@@ -35,6 +35,12 @@ public:
 class ResponseCode
 {
 public:
+    /**
+     * Abstract Method
+     * Parses the response from the given received bytes. 
+     * 
+     * @param received_bytes - std::vector<byte> contains the received bytes.
+     */
     virtual void parse(vector<byte> received_bytes) = 0;
 };
 

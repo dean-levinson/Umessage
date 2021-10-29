@@ -24,13 +24,13 @@ using std::map;
 
 class Client {
 private:
-    uint8_t client_version;
+    uint8_t client_version; // The client's version
     map<string, User> users; // [Client_name, User]
-    string privkey;
-    string pubkey;
-    string client_id;
-    string client_name;
-    Communicator comm;
+    string privkey; // The client's private key 
+    string pubkey; // The client's public key 
+    string client_id; // The client's id
+    string client_name; // The client's name
+    Communicator comm; // Aggregated Communicator object for the client
 
     /**
      * Builds the request payload and the request headers,
@@ -54,6 +54,8 @@ private:
      * If exists - read and update register info accordingly, and return true.
      * Else - return false. 
      * @return bool - Indicates weather the reading was successful.
+     * 
+     * @throws std::runtime_error Thrown if info file cannot be opened.
      */
     bool get_register_info_from_file();
 
@@ -62,6 +64,8 @@ private:
      * Line 1 - Full name.
      * Line 2 - Client id in ascii.
      * Line 3 - Private key in base64.
+     * 
+     * @throws std::runtime_error Thrown if info file already exist, or if cannot be opened after creation.
      */
     void update_register_info_into_file();
 
@@ -137,6 +141,7 @@ public:
      * 
      * @param client_name - the client name to register with.
      * 
+     * @throws AlreadyRegistered thrown if the client is already registered.
      * @throws ServerError thrown if the server didn't accept the registration, probably because there is already 
      * a user with the same client_name 
      */
@@ -163,12 +168,17 @@ public:
      * 
      * @param target_client_name - The target of the message.
      * @param text - The text of the message.
+     * 
+     * @throws NoSymmetricKey Throws if doesn't have the target's symmetric key.
+     * @throws std::invalid_argument Throws if trying to send yourself a text message.
+     * @throws ServerError Throws if got the wrong client_id in the response.
      */
     void send_text_message(string target_client_name, string text);
 
     /**
      * Send pull_message_request from the server, handle every message with Client::handle_message
-     * method, and returns the messages.
+     * method, and returns the messages. If catches an excpetion while trying to handle
+     * a message, continues.
      * 
      * @return list<Message> - The messages, after handling with handle_message.
      */
@@ -178,6 +188,8 @@ public:
      * Send get_symmetric_key_request to the given target client (by name).
      * 
      * @param target_client_name - The name of the target client
+     * 
+     * @throws ServerError Throws if got the wrong client_id in the response.
      */
     void get_symmetric_key(const string& target_client_name);
 
@@ -186,6 +198,9 @@ public:
      * Encrypts it using the target_client public key, and send it to the target_client.
      * 
      * @param target_client_name - The name of the target client.
+     * 
+     * @throws NoPublicKey Throws if doesn't have the target's public key.
+     * @throws ServerError Throws if got the wrong client_id in the response.
      */
     void send_symmetric_key(const string& target_client_name);
 
@@ -194,6 +209,10 @@ public:
      *
      * @param target_client_name - The target client to send to. 
      * @param file_path - The path of the file that should be sent.
+     * 
+     * @throws NoSymmetricKey Throws if doesn't have the target's symmetric key.
+     * @throws std::invalid_argument Throws if trying to send yourself a file.
+     * @throws ServerError Throws if got the wrong client_id in the response.
      */
     void send_file(const string& target_client_name, const string& file_path);
     
@@ -203,6 +222,8 @@ public:
      * 
      * @param file_content - The content of the file
      * @return std::string - The path of the temporary file.
+     * 
+     * @throws std::runtime_error Throws if cannot open the tmp file.
      */
     std::string save_temp_file(const string& file_content);
 

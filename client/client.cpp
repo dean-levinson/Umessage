@@ -203,11 +203,6 @@ void Client::register_client(string new_client_name) {
         throw(ServerError("Registration Failed. Maybe the user already exists..."));
     }
 
-    // // Add myself to the users list
-    // User myself = User(response.client_id, new_client_name);
-    // myself.set_pubkey(pubkey);
-    // add_user(std::move(myself));
-
     client_name = new_client_name;
     client_id = response.client_id;
 

@@ -1,6 +1,9 @@
 #include <string>
 #include <exception>
 
+/**
+ * would be raised if Got general error from the server.
+ */
 class ServerError : public std::exception {  
     private:
     std::string err;

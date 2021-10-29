@@ -7,11 +7,15 @@
 using namespace boost::asio::ip;
 using boost::asio::ip::tcp;
 
-Communicator::Communicator(tcp::endpoint endpoint): context(), socket(context), endpoint(endpoint) {}
+Communicator::Communicator(tcp::endpoint server_endpoint): context(), socket(context), server_endpoint(server_endpoint) {}
+
+Communicator::~Communicator() {
+    socket.close();
+}
 
 void Communicator::connect() {
-    std::cout << "Connecting to endpoint " << endpoint << "..." << std::endl;
-    socket.connect(endpoint);    
+    std::cout << "Connecting to endpoint " << server_endpoint << "..." << std::endl;
+    socket.connect(server_endpoint);    
 }
 
 void Communicator::send_bytes(vector<byte> bytes) {
