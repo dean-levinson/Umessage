@@ -6,7 +6,7 @@ from users import Users
 from messages import Messages
 import server_requests
 import server_responses
-
+from server_exceptions import NoSuchUser
 
 class UMessageServer(object):    
     def __init__(self) -> None:
@@ -31,10 +31,12 @@ class UMessageServer(object):
                 request_headers = server_requests.RequestHeaders(reader)
                 await request_headers.fetch()
 
-                # Update user's last seen
-                user = self.users.update_user_last_seen(self.users.get_user_by_client_id(request_headers.client_id))
-
-                logging.debug(f"Got request {request_headers} from {user}")
+                # Update user's last seen if is already exist.
+                try:
+                    user = self.users.update_user_last_seen(self.users.get_user_by_client_id(request_headers.client_id))
+                    logging.debug(f"Got request {request_headers} from {user}")
+                except NoSuchUser: # User hasn't created yet.
+                    logging.debug(f"Got request {request_headers}")
                 
                 try:
                     response_cls = server_responses.RESPONSES[request_headers.code] # type: Type[server_responses.Response]
