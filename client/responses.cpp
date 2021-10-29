@@ -67,7 +67,7 @@ void Response2000::parse(vector<byte> received_bytes) {
 }
 
 void Response2001::parse(vector<byte> received_bytes) {
-    unsigned int num_of_clients = received_bytes.size() / (16 + 255); // Todo - replace with const
+    unsigned int num_of_clients = received_bytes.size() / (16 + 255);
     for (unsigned int i = 0; i < num_of_clients; i++) {
         string client_id = pop_string(received_bytes, 16);
         string client_name = pop_string(received_bytes, 255);

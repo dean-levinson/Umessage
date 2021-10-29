@@ -320,7 +320,6 @@ void Client::send_file(const string& target_client_name, const string& file_path
 
     SymmetricEncryptor encryptor(target_user.get_symkey());
 
-    std::string file_content = get_file_content(file_path); // todo - delete
     Request1003 request(target_user.get_client_id(), 4, encryptor.encrypt(get_file_content(file_path)));
 
     build_and_send_request(request);
@@ -378,7 +377,7 @@ std::string Client::save_temp_file(const std::string& file_content) {
 
 void Client::handle_message(Message& message) {
     try {
-        get_user_by_client_id(message.from_client_id); // todo - fix reference problem
+        get_user_by_client_id(message.from_client_id); 
     } catch (const std::exception& e) {
         // Change the content of the message in case this exception will be caught.
         message.content = std::string("Failed resolving sender - Got error: ") + e.what();
@@ -387,7 +386,6 @@ void Client::handle_message(Message& message) {
 
     User& other_user = get_user_by_client_id(message.from_client_id);
 
-    // todo - make const vars
     switch (message.message_type) {
         case 1:
         {   
