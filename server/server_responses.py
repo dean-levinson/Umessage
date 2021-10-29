@@ -80,7 +80,7 @@ class RegisterResponse(Response):
         """
         Overrides abstract 'fetch_and_respond'.
         Adds the new user to the users DB, and returns the new generated client id.
-        If the user is already exist, sends a Server Error.
+        If the user already exists, sends a Server Error.
         """
         received_bytes = await self._reader.read(request_headers.payload_size)
         client_name, public_key = StructWrapper(Fields.CLIENT_NAME,

@@ -13,7 +13,7 @@ class DBManaged(object):
 
     def _setup_db(self):
         """
-        Setup the database. Creates the DataBase if it isn't already exist.
+        Setup the database. Creates the Database if it doesn't already exist.
         """
         self._create_if_not_exist()
 
@@ -49,7 +49,7 @@ class DBManaged(object):
     @db_transaction
     def _create_if_not_exist(self):
         """
-        Creates the table if it isn't already exist.
+        Creates the table if it doesn't already exist.
         """
         self._cur.execute(f"""
         create table if not exists {self._TABLE_NAME}({", ".join(self._TABLE_PARAMS)})

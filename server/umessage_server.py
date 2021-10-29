@@ -31,7 +31,7 @@ class UMessageServer(object):
                 request_headers = server_requests.RequestHeaders(reader)
                 await request_headers.fetch()
 
-                # Update user's last seen if is already exist.
+                # Update user's last seen if the user already exists.
                 try:
                     user = self.users.update_user_last_seen(self.users.get_user_by_client_id(request_headers.client_id))
                     logging.debug(f"Got request {request_headers} from {user}")

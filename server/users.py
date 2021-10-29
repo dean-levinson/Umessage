@@ -41,7 +41,7 @@ class Users(DBManaged):
 
     def is_user_exist(self, client_name: str):
         """
-        Returns a boolean that indicates weather the given client_name is exist in the Database.
+        Returns a boolean that indicates weather the given client_name exists in the Database.
         """
         try:
             self.get_user_by_client_name(client_name)

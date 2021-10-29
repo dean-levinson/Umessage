@@ -87,7 +87,7 @@ class Messages(DBManaged):
 
     def is_message_exist(self, message_id: int):
         """
-        Returns a boolean that indicates weather a message with the given message id is exist in the Database.
+        Returns a boolean that indicates weather a message with the given message id exists in the Database.
         """
         try:
             self.get_message(message_id)
