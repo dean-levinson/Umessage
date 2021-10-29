@@ -14,6 +14,16 @@ class UMessageServer(object):
         self.messages = Messages()
 
     async def handle_client(self, reader, writer):
+        """
+        Called as a callback after creating a connection with the client.
+        reader, writer - Represents a reader, writer object that provides APIs to read and write data
+        from the IO stream.
+        While the connection is established, serves the client - 
+        1) Waits for client request.
+        2) Parses the request's headers and updates the user's last seen.
+        3) Routes it the to the corresponding Response handler that fetches the rest of the request
+        and respond accordingly. 
+        """
         try: 
             peer = writer.get_extra_info('peername')
             logging.info(f"Client connected from {peer}")

@@ -12,9 +12,17 @@ class DBManaged(object):
         self._setup_db()
 
     def _setup_db(self):
+        """
+        Setup the database. Creates the DataBase if it isn't already exist.
+        """
         self._create_if_not_exist()
 
     def db_transaction(func):
+        """
+        Decorator that wraps every method that interacts with the db.
+        Before the intraction - connect to the database and setup the cursor.
+        After the intraction - Commits the changes and closes the connection.
+        """
         @wraps(func)  
         def wrapper(self, *args, **kwargs):
             if self._in_transaction:
@@ -40,10 +48,9 @@ class DBManaged(object):
 
     @db_transaction
     def _create_if_not_exist(self):
+        """
+        Creates the table if it isn't already exist.
+        """
         self._cur.execute(f"""
         create table if not exists {self._TABLE_NAME}({", ".join(self._TABLE_PARAMS)})
         """)
-
-    def _sync_from_db():
-        raise NotImplementedError("Abstract method")
-        

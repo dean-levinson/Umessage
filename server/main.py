@@ -8,10 +8,17 @@ from server_consts import PORT_INFO_PATH
 logging.basicConfig(level=logging.DEBUG, format="[%(levelname)s]: %(message)s")
 
 def get_port_from_file():
+    """Extract the server's port from PORT_INFO file
+
+    Returns:
+        int: the server's port
+    """     
     with open(PORT_INFO_PATH, "rb") as fp:
         return int(fp.read())
 
 async def main():
+    """Async main - Initializes and activates the server
+    """
     app = UMessageServer()
     server_loop = await asyncio.start_server(
         app.handle_client, "127.0.0.1", get_port_from_file())

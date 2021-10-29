@@ -7,7 +7,7 @@ from db_manager import DBManaged
         
 class User(object):
     """
-    Dummy object, just for representation.
+    Dummy object of User, just for representation.
     """
     def __init__(self, client_id: bytes, client_name: str, public_key: bytes, last_seen: datetime):
         self.client_id = client_id
@@ -29,6 +29,9 @@ class Users(DBManaged):
         super().__init__()
 
     def add_user(self, client_name: str, public_key: bytes):
+        """
+        Adds a new user to the Database and returns a dummy obj of User.
+        """
         if self.is_user_exist(client_name):
             raise UserAlreadyExists(client_name)
         
@@ -37,6 +40,9 @@ class Users(DBManaged):
         return new_user
 
     def is_user_exist(self, client_name: str):
+        """
+        Returns a boolean that indicates weather the given client_name is exist in the Database.
+        """
         try:
             self.get_user_by_client_name(client_name)
         except NoSuchUser:
@@ -46,6 +52,12 @@ class Users(DBManaged):
 
     @DBManaged.db_transaction
     def get_user_by_client_name(self, client_name: str):
+        """
+        Search for a user with the given client name in the Database. 
+        If found more than one, raises DBError,
+        Else if not found, raises NoSuchUser exception,
+        Else, Returns a dummy User obj.
+        """
         results = self._cur.execute(f"SELECT ID, Name, PublicKey, LastSeen FROM \
          {self._TABLE_NAME} WHERE Name = ?;", (client_name, )).fetchall()
 
@@ -59,6 +71,12 @@ class Users(DBManaged):
 
     @DBManaged.db_transaction
     def get_user_by_client_id(self, client_id: bytes):
+        """
+        Searches for a user with the given client id in the Database. 
+        If found more than one, raises DBError,
+        Else if not found, raises NoSuchUser exception,
+        Else, Returns a dummy User obj.
+        """
         results = self._cur.execute(f"SELECT ID, Name, PublicKey, LastSeen FROM {self._TABLE_NAME} WHERE ID = ?;", (client_id, )).fetchall()
 
         if len(results) > 1:
@@ -71,17 +89,27 @@ class Users(DBManaged):
 
     @DBManaged.db_transaction
     def _add_user_to_db(self, user: User):
+        """
+        Adds a new user to the Database using the given client name and public key.
+        """
         self._cur.execute(f"INSERT INTO '{self._TABLE_NAME}' VALUES(?, ?, ?, ?);",
                           (user.client_id, user.client_name, user.public_key, user.last_seen))
     
     @DBManaged.db_transaction
     def __iter__(self):
+        """
+        Returns an iterator[User] of all the users in the Database.
+        """
         all_results = self._cur.execute(f"SELECT ID, Name, PublicKey, LastSeen FROM {self._TABLE_NAME};").fetchall()
         return iter([self._get_user_from_db_result(result) for result in all_results])
 
 
     @DBManaged.db_transaction
     def update_user_last_seen(self, user: User):
+        """
+        Updates the given user's last seen in the database with the current time.
+        Returns the new dummy User obj.
+        """
         if not self.is_user_exist(user.client_name):
             raise NoSuchUser()
 
@@ -96,6 +124,9 @@ class Users(DBManaged):
 
     @staticmethod
     def _get_user_from_db_result(db_result: tuple):
+        """
+        Creates a dummy User obj from sqlite3 tuple result that indicates a row in the table.
+        """
         client_id, client_name, public_key, last_seen = db_result
         return User(client_id, client_name.decode(), public_key, datetime.datetime.fromisoformat(last_seen.decode()))
     

@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 RESPONSES = {}
 
 def response_code(code):
+    """
+    Class Decorator that wraps Response class. Maps between response codes and the corresponding 
+    classes that should handle them. Uses global RESPONSES dict to store the mapping.
+    """
     def deco(inner):
         RESPONSES[code] = inner
         inner.CODE = code
@@ -28,13 +32,24 @@ class Response(object):
         self._writer = writer
 
     async def fetch_and_respond(self, request_headers: RequestHeaders):
+        """
+        Fetches the rest of the client's request using the given request's headers data.
+        Respond to the client's request with corresponding response.
+        """        
         raise NotImplementedError("Abstract class")
     
     async def write(self, payload):
+        """
+        Sends the given payload to the client.
+        """
         self._writer.write(payload)
         await self._writer.drain()
 
     async def respond_headers(self, payload_size, code=None):
+        """
+        Sends the response's headers - using the given payload size and the given code.
+        If code param is not given, uses self.CODE.
+        """
         if not code:
             code = self.CODE
         await self.write(StructWrapper(Fields.VERSION,
@@ -44,16 +59,29 @@ class Response(object):
                                                                  payload_size))
 
     async def respond(self, payload: bytes):
+        """
+        Sends to the client a full response which contains:
+        1) An header that was resloved by the class members and the given payload's size.
+        2) The given payload.
+        """
         await self.respond_headers(len(payload))
         await self.write(payload)
     
     async def respond_error(self, error_message=None):
+        """
+        Sends to the client a 'Server Error' response.
+        """
         logging.error(error_message)
         await self.respond_headers(0, code=SERVER_ERROR_CODE)
 
 @response_code(1000)
 class RegisterResponse(Response):
     async def fetch_and_respond(self, request_headers: RequestHeaders):
+        """
+        Overrides abstract 'fetch_and_respond'.
+        Adds the new user to the users DB, and returns the new generated client id.
+        If the user is already exist, sends a Server Error.
+        """
         received_bytes = await self._reader.read(request_headers.payload_size)
         client_name, public_key = StructWrapper(Fields.CLIENT_NAME,
                                                 Fields.PUBLIC_KEY).unpack(received_bytes)
@@ -73,6 +101,10 @@ class RegisterResponse(Response):
 @response_code(1001)
 class ClientListResponse(Response):
     async def fetch_and_respond(self, request_headers: RequestHeaders):
+        """
+        Overrides abstract 'fetch_and_respond'.
+        Send to the client the client list.
+        """
         if not (request_headers.payload_size == 0):
             await self.respond_error("Payload size of client list request should be 0")
             return
@@ -87,6 +119,11 @@ class ClientListResponse(Response):
 @response_code(1002)
 class PublicKeyResponse(Response):
     async def fetch_and_respond(self, request_headers: RequestHeaders):
+        """
+        Overrides abstract 'fetch_and_respond'.
+        1) Resolves the client id by the given client name. If it cannot be resolved, send Server Error.
+        2) Sends the user's public key to the client. 
+        """
         received_bytes = await self._reader.read(request_headers.payload_size)
         client_id = StructWrapper(Fields.CLIENT_ID).unpack(received_bytes)[0]
 
@@ -106,6 +143,11 @@ class PublicKeyResponse(Response):
 @response_code(1003)
 class MessageResponse(Response):
     async def fetch_and_respond(self, request_headers: RequestHeaders):
+        """
+        Overrides abstract 'fetch_and_respond'.
+        1) Receives a message from the client, and adds it to the Message DB.
+        2) Sends the sender client id and the generated message id to the client.
+        """
         received_bytes = await self._reader.read(request_headers.payload_size)
         header_fields = (Fields.CLIENT_ID, Fields.MESSAGE_TYPE, Fields.CONTENT_SIZE)
         header_size = sum(field.size for field in header_fields)
@@ -126,6 +168,10 @@ class MessageResponse(Response):
 @response_code(1004)
 class PullMessagesResponse(Response):
     async def fetch_and_respond(self, request_headers: RequestHeaders):
+        """
+        Overrides abstract 'fetch_and_respond'.
+        Pulls all the waiting messages of the client from the messages DB and send them to the client.
+        """
         if not (request_headers.payload_size == 0):
             await self.respond_error("Payload size of pull messages request should be 0")
             return

@@ -18,6 +18,9 @@ class RequestHeaders(RequestFetcher):
         self.payload_size = None
 
     async def fetch(self):
+        """
+        Fetches the request's headers from the server, and parses it into to instance's members.
+        """
         struct_wrapper = StructWrapper(Fields.CLIENT_ID, 
                                        Fields.VERSION,
                                        Fields.CODE,
