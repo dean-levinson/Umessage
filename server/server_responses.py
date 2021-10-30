@@ -51,7 +51,7 @@ class Response(object):
         If code param is not given, uses self.CODE.
         """
         if not code:
-            code = self.CODE
+            code = self.CODE + 1000 # The default is (response code = request code + 1000)
         await self.write(StructWrapper(Fields.VERSION,
                                        Fields.CODE,
                                        Fields.PAYLOAD_SIZE).pack(SERVER_VERSION,
